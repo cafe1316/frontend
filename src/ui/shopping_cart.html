@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>购物车 | CaféBliss</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            color: #000;
+            background-color: #f9fafb;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #fff5f5 0%, #fff 100%);
+        }
+        
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            border: 1px solid #e5e7eb;
+            border-radius: 9999px;
+            overflow: hidden;
+            width: fit-content;
+        }
+        
+        .quantity-btn {
+            background: white;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quantity-btn:hover {
+            background: #f9fafb;
+        }
+        
+        .quantity-input {
+            width: 2rem;
+            text-align: center;
+            border: none;
+            outline: none;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                padding: 0 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="gradient-bg">
+    <div class="mx-auto max-w-[1440px] bg-white shadow-lg flex flex-col">
+        <!-- 导航栏 -->
+        <nav class="bg-white py-4 px-8 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-coffee text-red-500 text-2xl"></i>
+                <span class="text-xl font-bold">CaféBliss</span>
+            </div>
+            
+            <div class="hidden md:flex space-x-8">
+                <a href="#" class="text-black hover:text-red-500 transition">首页</a>
+                <a href="#" class="text-black hover:text-red-500 transition">咖啡系列</a>
+                <a href="#" class="text-black hover:text-red-500 transition">精选周边</a>
+                <a href="#" class="text-black hover:text-red-500 transition">关于我们</a>
+            </div>
+            
+            <div class="flex items-center space-x-6">
+                <a href="#" class="text-black hover:text-red-500 transition">
+                    <i class="fas fa-search"></i>
+                </a>
+                <a href="#" class="text-black hover:text-red-500 transition">
+                    <i class="fas fa-user"></i>
+                </a>
+                <a href="#" class="text-red-500 relative">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                </a>
+                <button class="md:hidden text-black">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- 购物车内容 -->
+        <div class="py-8 px-4 md:px-8 flex-1">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-2xl font-bold mb-8 flex items-center">
+                    <i class="fas fa-shopping-cart text-red-500 mr-3"></i>
+                    我的购物车
+                    <span class="text-gray-500 font-normal text-lg ml-2">(3 件商品)</span>
+                </h1>
+                
+                <!-- 购物车商品列表 -->
+                <div class="border rounded-xl overflow-hidden">
+                    <!-- 表头 -->
+                    <div class="bg-gray-50 p-4 hidden md:grid md:grid-cols-12 text-sm text-gray-500 font-medium">
+                        <div class="md:col-span-6 lg:col-span-6">商品信息</div>
+                        <div class="md:col-span-2 lg:col-span-2 text-center">单价</div>
+                        <div class="md:col-span-2 lg:col-span-2 text-center">数量</div>
+                        <div class="md:col-span-2 lg:col-span-2 text-center">小计</div>
+                    </div>
+                    
+                    <!-- 商品1 -->
+                    <div class="border-b p-4">
+                        <div class="md:grid md:grid-cols-12 gap-4 items-center">
+                            <!-- 商品信息 -->
+                            <div class="md:col-span-6 lg:col-span-6 flex mb-4 md:mb-0">
+                                <!-- 选择框 -->
+                                <div class="mr-4 flex items-center">
+                                    <input type="checkbox" class="rounded text-red-500 focus:ring-red-500 h-5 w-5" checked>
+                                </div>
+                                
+                                <!-- 商品图片 -->
+                                <div class="w-20 h-20 rounded-lg overflow-hidden mr-4 flex-shrink-0">
+                                    <img src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80" alt="埃塞俄比亚耶加雪菲" class="w-full h-full object-cover">
+                                </div>
+                                
+                                <!-- 商品名称和规格 -->
+                                <div>
+                                    <h3 class="font-medium leading-tight mb-1">埃塞俄比亚耶加雪菲咖啡豆</h3>
+                                    <p class="text-xs text-gray-500 mb-1">规格：227g（半磅装）</p>
+                                    <p class="text-xs text-gray-500 hidden md:block">研磨方式：整颗粒（自行研磨）</p>
+                                </div>
+                            </div>
+                            
+                            <!-- 单价 -->
+                            <div class="md:col-span-2 lg:col-span-2 flex justify-between md:block mb-2 md:mb-0">
+                                <div class="md:hidden">单价：</div>
+                                <div class="text-center">¥128</div>
+                            </div>
+                            
+                            <!-- 数量 -->
+                            <div class="md:col-span-2 lg:col-span-2 flex justify-between md:block mb-2 md:mb-0">
+                                <div class="md:hidden">数量：</div>
+                                <div class="flex justify-center">
+                                    <div class="quantity-selector">
+                                        <button class="quantity-btn">-</button>
+                                        <input type="text" value="1" class="quantity-input" readonly>
+                                        <button class="quantity-btn">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 小计 -->
+                            <div class="md:col-span-2 lg:col-span-2 flex justify-between md:block">
+                                <div class="md:hidden">小计：</div>
+                                <div class="text-center font-medium text-red-500">¥128</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 操作按钮 (在移动视图下显示在底部，在桌面视图下显示在右侧) -->
+                        <div class="flex justify-end mt-3 md:mt-2 space-x-4 text-sm">
+                            <button class="text-gray-500 hover:text-red-500 transition flex items-center">
+                                <i class="fas fa-heart mr-1"></i>
+                                <span>移入收藏</span>
+                            </button>
+                            <button class="text-gray-500 hover:text-red-500 transition flex items-center">
+                                <i class="fas fa-trash-alt mr-1"></i>
+                                <span>删除</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 商品2 -->
+                    <div class="border-b p-4">
+                        <div class="md:grid md:grid-cols-12 gap-4 items-center">
+                            <!-- 商品信息 -->
+                            <div class="md:col-span-6 lg:col-span-6 flex mb-4 md:mb-0">
+                                <!-- 选择框 -->
+                                <div class="mr-4 flex items-center">
+                                    <input type="checkbox" class="rounded text-red-500 focus:ring-red-500 h-5 w-5" checked>
+                                </div>
+                                
+                                <!-- 商品图片 -->
+                                <div class="w-20 h-20 rounded-lg overflow-hidden mr-4 flex-shrink-0">
+                                    <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80" alt="手冲咖啡套装" class="w-full h-full object-cover">
+                                </div>
+                                
+                                <!-- 商品名称和规格 -->
+                                <div>
+                                    <h3 class="font-medium leading-tight mb-1">精致手冲咖啡套装</h3>
+                                    <p class="text-xs text-gray-500 mb-1">套装内含：手冲壶、滤杯、滤纸、温度计</p>
+                                    <p class="text-xs text-gray-500 hidden md:block">颜色：原木色</p>
+                                </div>
+                            </div>
+                            
+                            <!-- 单价 -->
+                            <div class="md:col-span-2 lg:col-span-2 flex justify-between md:block mb-2 md:mb-0">
+                                <div class="md:hidden">单价：</div>
+                                <div class="text-center">¥399</div>
+                            </div>
+                            
+                            <!-- 数量 -->
+                            <div class="md:col-span-2 lg:col-span-2 flex justify-between md:block mb-2 md:mb-0">
+                                <div class="md:hidden">数量：</div>
+                                <div class="flex justify-center">
+                                    <div class="quantity-selector">
+                                        <button class="quantity-btn">-</button>
+                                        <input type="text" value="1" class="quantity-input" readonly>
+                                        <button class="quantity-btn">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 小计 -->
+                            <div class="md:col-span-2 lg:col-span-2 flex justify-between md:block">
+                                <div class="md:hidden">小计：</div>
+                                <div class="text-center font-medium text-red-500">¥399</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 操作按钮 -->
+                        <div class="flex justify-end mt-3 md:mt-2 space-x-4 text-sm">
+                            <button class="text-gray-500 hover:text-red-500 transition flex items-center">
+                                <i class="fas fa-heart mr-1"></i>
+                                <span>移入收藏</span>
+                            </button>
+                            <button class="text-gray-500 hover:text-red-500 transition flex items-center">
+                                <i class="fas fa-trash-alt mr-1"></i>
+                                <span>删除</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 商品3 -->
+                    <div class="p-4">
+                        <div class="md:grid md:grid-cols-12 gap-4 items-center">
+                            <!-- 商品信息 -->
+                            <div class="md:col-span-6 lg:col-span-6 flex mb-4 md:mb-0">
+                                <!-- 选择框 -->
+                                <div class="mr-4 flex items-center">
+                                    <input type="checkbox" class="rounded text-red-500 focus:ring-red-500 h-5 w-5" checked>
+                                </div>
+                                
+                                <!-- 商品图片 -->
+                                <div class="w-20 h-20 rounded-lg overflow-hidden mr-4 flex-shrink-0">
+                                    <img src="https://images.unsplash.com/photo-1610632380989-680fe40816c6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80" alt="冷萃咖啡瓶" class="w-full h-full object-cover">
+                                </div>
+                                
+                                <!-- 商品名称和规格 -->
+                                <div>
+                                    <h3 class="font-medium leading-tight mb-1">冷萃咖啡瓶</h3>
+                                    <p class="text-xs text-gray-500 mb-1">规格：600ml</p>
+                                    <p class="text-xs text-gray-500 hidden md:block">材质：硼硅酸玻璃</p>
+                                </div>
+                            </div>
+                            
+                            <!-- 单价 -->
+                            <div class="md:col-span-2 lg:col-span-2 flex justify-between md:block mb-2 md:mb-0">
+                                <div class="md:hidden">单价：</div>
+                                <div class="text-center">¥159</div>
+                            </div>
+                            
+                            <!-- 数量 -->
+                            <div class="md:col-span-2 lg:col-span-2 flex justify-between md:block mb-2 md:mb-0">
+                                <div class="md:hidden">数量：</div>
+                                <div class="flex justify-center">
+                                    <div class="quantity-selector">
+                                        <button class="quantity-btn">-</button>
+                                        <input type="text" value="1" class="quantity-input" readonly>
+                                        <button class="quantity-btn">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 小计 -->
+                            <div class="md:col-span-2 lg:col-span-2 flex justify-between md:block">
+                                <div class="md:hidden">小计：</div>
+                                <div class="text-center font-medium text-red-500">¥159</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 操作按钮 -->
+                        <div class="flex justify-end mt-3 md:mt-2 space-x-4 text-sm">
+                            <button class="text-gray-500 hover:text-red-500 transition flex items-center">
+                                <i class="fas fa-heart mr-1"></i>
+                                <span>移入收藏</span>
+                            </button>
+                            <button class="text-gray-500 hover:text-red-500 transition flex items-center">
+                                <i class="fas fa-trash-alt mr-1"></i>
+                                <span>删除</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 购物车底部操作栏 -->
+                <div class="mt-6 flex flex-col md:flex-row justify-between items-start md:items-center">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <div class="mr-4 flex items-center">
+                            <input type="checkbox" class="rounded text-red-500 focus:ring-red-500 h-5 w-5" checked>
+                            <span class="ml-2">全选</span>
+                        </div>
+                        <button class="text-gray-500 hover:text-red-500 transition">
+                            批量删除
+                        </button>
+                        <button class="text-gray-500 hover:text-red-500 transition ml-4">
+                            清空购物车
+                        </button>
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row items-end md:items-center">
+                        <div class="mb-4 md:mb-0 md:mr-8 text-right">
+                            <div class="text-sm">
+                                已选商品 <span class="font-medium">3</span> 件，
+                                合计：<span class="text-xl font-bold text-red-500">¥686</span>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                含运费 ¥0
+                            </div>
+                        </div>
+                        
+                        <button class="bg-red-500 text-white py-3 px-10 rounded-full hover:bg-red-600 transition transform hover:scale-105 text-lg">
+                            去结算
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 购物车为空时显示的内容 -->
+                <div class="hidden mt-8 py-16 flex flex-col items-center justify-center text-center">
+                    <div class="text-gray-300 mb-4">
+                        <i class="fas fa-shopping-cart text-6xl"></i>
+                    </div>
+                    <h2 class="text-xl font-medium text-gray-500 mb-4">您的购物车还是空的</h2>
+                    <p class="text-gray-500 mb-6">您可以去看看有哪些商品值得买</p>
+                    <a href="#" class="bg-red-500 text-white py-2 px-8 rounded-full hover:bg-red-600 transition">
+                        去购物
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页脚 -->
+        <footer class="bg-white py-8 px-8 md:px-16 border-t">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fas fa-coffee text-red-500 text-2xl"></i>
+                        <span class="text-xl font-bold">CaféBliss</span>
+                    </div>
+                    <p class="text-sm mb-4">我们致力于为您提供最高品质的咖啡体验，从世界各地精选的咖啡豆到专业的咖啡器具。</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-black hover:text-red-500 transition">
+                            <i class="fab fa-weixin text-lg"></i>
+                        </a>
+                        <a href="#" class="text-black hover:text-red-500 transition">
+                            <i class="fab fa-weibo text-lg"></i>
+                        </a>
+                        <a href="#" class="text-black hover:text-red-500 transition">
+                            <i class="fab fa-instagram text-lg"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-bold mb-4">产品系列</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-red-500 transition">咖啡豆</a></li>
+                        <li><a href="#" class="hover:text-red-500 transition">手冲器具</a></li>
+                        <li><a href="#" class="hover:text-red-500 transition">咖啡机</a></li>
+                        <li><a href="#" class="hover:text-red-500 transition">礼品套装</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-bold mb-4">关于我们</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-red-500 transition">品牌故事</a></li>
+                        <li><a href="#" class="hover:text-red-500 transition">咖啡文化</a></li>
+                        <li><a href="#" class="hover:text-red-500 transition">线下门店</a></li>
+                        <li><a href="#" class="hover:text-red-500 transition">加入我们</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-bold mb-4">客户服务</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-red-500 transition">配送说明</a></li>
+                        <li><a href="#" class="hover:text-red-500 transition">退换政策</a></li>
+                        <li><a href="#" class="hover:text-red-500 transition">常见问题</a></li>
+                        <li><a href="#" class="hover:text-red-500 transition">联系我们</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="pt-8 border-t text-center text-sm">
+                <p>&copy; 2023 CaféBliss 咖啡商城. 保留所有权利.</p>
+            </div>
+        </footer>
+    </div>
+</body>
+</html> 
