@@ -7,9 +7,9 @@ const Header: React.FC = () => {
       <nav className="bg-white py-4 px-8 flex items-center justify-between sticky top-0 z-50 shadow-sm">
         <div className="flex items-center space-x-2">
           <i className="fas fa-coffee text-red-500 text-2xl"></i>
-          <Link to="/" className="text-xl font-bold">
+          <span className="text-xl font-bold">
             CaféBliss
-          </Link>
+          </span>
         </div>
 
         <div className="hidden md:flex space-x-8">
@@ -34,7 +34,7 @@ const Header: React.FC = () => {
           <Link to="#" className="text-black hover:text-red-500 transition">
             <i className="fas fa-search"></i>
           </Link>
-          <Link to="#" className="text-black hover:text-red-500 transition">
+          <Link to="/login" className="text-black hover:text-red-500 transition">
             <i className="fas fa-user"></i>
           </Link>
           <Link

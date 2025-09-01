@@ -1,23 +1,5 @@
 import "../../App.css";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import Header from "../header";
-import Footer from "../footer";
-import Products from "./ProductsPage";
-
-function App() {
-  return (
-    <Router>
-      <div>
-        <Header/>
-        <Routes>
-          <Route path="/products" element={<Products />} />
-          <Route path="/" element={<HomePage />} />
-        </Routes>
-        <Footer />
-      </div>
-    </Router>
-  );
-}
+import { Link } from "react-router-dom";
 
 // 首页组件
 const HomePage = () => {
@@ -274,4 +256,4 @@ const HomePage = () => {
   );
 };
 
-export default App;
+export default HomePage;
