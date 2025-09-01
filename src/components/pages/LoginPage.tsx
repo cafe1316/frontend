@@ -1,5 +1,5 @@
 import { signInWithRedirect, getRedirectResult } from "firebase/auth";
-import { auth, provider } from "../../firebase"; // 注意你的路径
+import { auth, provider } from "../../lib/firebase"; // 注意你的路径
 import { useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
