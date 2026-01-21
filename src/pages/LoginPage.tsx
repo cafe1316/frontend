@@ -1,10 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { signInWithRedirect, getRedirectResult } from "firebase/auth";
+import axios from "axios";
+// 假设 firebase 配置在 src/lib/firebase.ts，如果路径不同请调整
+import { auth, provider } from "../lib/firebase";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+
+  // 处理 Google 登录点击
+  const handleGoogleLogin = () => {
+    signInWithRedirect(auth, provider);
+  };
+
+  // 处理 Google 登录回调
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (result?.user) {
+          const token = await result.user.getIdToken();
+          // 发送 token 到后端验证
+          const res = await axios.post("/api/auth/google", { token });
+          localStorage.setItem("token", res.data.token);
+          navigate("/");
+        }
+      })
+      .catch((err) => {
+        console.error("Google 登录失败", err);
+      });
+  }, [navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault(); // 阻止表单默认提交刷新页面
@@ -112,7 +138,10 @@ const LoginPage = () => {
               </div>
 
               {/* 社交媒体登陆 */}
-              <button className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition mb-4 flex items-center justify-center">
+              <button 
+                onClick={handleGoogleLogin}
+                type="button" // 防止触发表单提交
+                className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition mb-4 flex items-center justify-center">
                 <img
                   src="https://www.google.com/favicon.ico"
                   alt="Google"

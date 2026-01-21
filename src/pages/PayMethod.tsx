@@ -1,4 +1,3 @@
-import React from 'react'
 import AccountSideBar from '../components/AccountSideBar'
 
 const PayMethod = () => {
