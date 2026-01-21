@@ -1,4 +1,3 @@
-import React from "react";
 
 const ProductDetailPage = () => {
   return (
@@ -158,12 +157,12 @@ const ProductDetailPage = () => {
               </div>
 
               <div className="flex space-x-4 mb-8">
-                <button className="flex-1 bg-red-500 text-white py-3 px-6 rounded-full hover:bg-red-600 transition transform hover:scale-105 flex items-center justify-center">
+                <button className="btn-primary flex-1 py-3 px-6 rounded-full flex items-center justify-center">
                   <i className="fas fa-shopping-cart mr-2"></i>
                   Add to Cart
                 </button>
 
-                <button className="flex-1 bg-black text-white py-3 px-6 rounded-full hover:bg-gray-800 transition transform hover:scale-105 flex items-center justify-center">
+                <button className="btn-base bg-black text-white hover:bg-gray-800 flex-1 py-3 px-6 rounded-full flex items-center justify-center">
                   Buy Now
                 </button>
               </div>

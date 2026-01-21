@@ -1,4 +1,6 @@
-import React from 'react'
+
+import { Link } from 'react-router-dom'
+
 
 const MyShoppingCart = () => {
   return (
@@ -223,11 +225,10 @@ const MyShoppingCart = () => {
                             
                             <div className="space-y-3">
                                 <button className="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition font-medium">
-                                    Checkout (3)
-                                </button>
-                                <a href="#" className="block text-center text-red-500 hover:underline">
+                                    <Link to="/checkout" className="block text-center text-red-500 hover:underline">
                                     Continue Shopping
-                                </a>
+                                    </Link>
+                                </button>    
                             </div>
                         </div>
                     </div>

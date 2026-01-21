@@ -1,4 +1,3 @@
-import React from 'react'
 import { Link } from 'react-router-dom'
 
 
@@ -18,41 +17,41 @@ const AccountSideBar = () => {
                 <div className="border-t pt-4">
                     <ul className="space-y-1">
                         <li className="py-2 px-3 rounded hover:bg-gray-50">
-                            <a href="#" className="block text-gray-700 hover:text-red-500">
+                            <Link to="/profile" className="block text-gray-700 hover:text-red-500">
                                 <i className="fas fa-user-circle mr-2"></i> Profile
-                            </a>
+                            </Link>
                         </li>
                         <li className="py-2 px-3 rounded active-menu">
-                            <a href="#" className="block">
+                            <Link to="/myorders" className="block">
                                 <i className="fas fa-shopping-basket mr-2"></i> My Orders
-                            </a>
+                            </Link>
                         </li>
                         <li className="py-2 px-3 rounded hover:bg-gray-50">
-                            <a href="#" className="block text-gray-700 hover:text-red-500">
+                            <Link to="/myshoppingcart" className="block text-gray-700 hover:text-red-500">
                                 <i className="fas fa-shopping-cart mr-2"></i> Cart
                                 <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 ml-2">3</span>
-                            </a>
+                            </Link>
                         </li>
                         <li className="py-2 px-3 rounded hover:bg-gray-50">
-                            <a href="#" className="block text-gray-700 hover:text-red-500">
+                            <Link to="/wishlist" className="block text-gray-700 hover:text-red-500">
                                 <i className="fas fa-heart mr-2"></i> Wishlist
                                 <span className="bg-gray-200 text-gray-700 text-xs rounded-full px-2 py-0.5 ml-2">5</span>
-                            </a>
+                            </Link>
                         </li>
                         <li className="py-2 px-3 rounded hover:bg-gray-50">
-                            <a href="#" className="block text-gray-700 hover:text-red-500">
+                            <Link to="/address" className="block text-gray-700 hover:text-red-500">
                                 <i className="fas fa-map-marker-alt mr-2"></i> Address
-                            </a>
+                            </Link>
                         </li>
                         <li className="py-2 px-3 rounded hover:bg-gray-50">
-                            <a href="#" className="block text-gray-700 hover:text-red-500">
+                            <Link to="/paymethod" className="block text-gray-700 hover:text-red-500">
                                 <i className="fas fa-credit-card mr-2"></i> Payment
-                            </a>
+                            </Link>
                         </li>
                         <li className="py-2 px-3 rounded hover:bg-gray-50">
-                            <a href="#" className="block text-gray-700 hover:text-red-500">
+                            <Link to="/setting" className="block text-gray-700 hover:text-red-500">
                                 <i className="fas fa-cog mr-2"></i> Settings
-                            </a>
+                            </Link>
                         </li>
                     </ul>
                 </div>
