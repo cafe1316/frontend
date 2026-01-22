@@ -1,5 +1,7 @@
 import React from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
+import { useAuth } from "./AuthContext";
+
 
 const CustomerLink = ({
   to,
@@ -42,6 +44,9 @@ const CustomerLink = ({
 };
 
 const NavBar: React.FC = () => {
+  // 使用全局 AuthContext，状态变化时组建会自动更新
+  const { isAuthenticated } = useAuth();
+
   return (
     <>
       <nav className="bg-white py-4 px-8 flex items-center justify-between sticky top-0 z-50 shadow-sm">
@@ -83,13 +88,13 @@ const NavBar: React.FC = () => {
             <i className="fas fa-search"></i>
           </Link>
           <CustomerLink
-            to="/wishlist"
+            to={isAuthenticated ? "/wishlist" : "/login"}
             className="text-black hover:text-red-500 transition"
           >
             <i className="fas fa-heart"></i>
           </CustomerLink>
           <CustomerLink
-            to="/profile"
+            to={isAuthenticated ? "/profile" : "/login"}
             className="text-black hover:text-red-500 transition"
           >
             <i className="fas fa-user"></i>
