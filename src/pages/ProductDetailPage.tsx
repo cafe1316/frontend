@@ -1,377 +1,298 @@
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import { productService } from "../api/services/productService";
+import { ProductDetailDto } from "../api/types/product";
+import { useCart } from "../components/CartContext";
 
 const ProductDetailPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const [product, setProduct] = useState<ProductDetailDto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<"details" | "specs" | "brewing">("details");
+  const { addToCart } = useCart();
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        const data = await productService.getProductById(Number(id));
+        setProduct(data);
+        // Set initial selected image
+        if (data.imageUrls && data.imageUrls.length > 0) {
+          setSelectedImage(data.imageUrls[0]);
+        }
+      } catch (err) {
+        setError("Failed to load product details.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  if (loading) {
+    return <div className="container mx-auto py-20 text-center">Loading...</div>;
+  }
+
+  if (error || !product) {
+    return <div className="container mx-auto py-20 text-center text-red-500">{error || "Product not found"}</div>;
+  }
+
+  // Helper to safely get image
+  const mainImage = selectedImage || product.imageUrls?.[0] || 'https://placehold.co/600x400?text=No+Image';
+
   return (
     <>
       <main className="flex-1">
-        {/* 面包屑导航 */}
+        {/* Breadcrumb Navigation */}
         <div className="py-3 px-8 bg-gray-50 text-sm">
           <div className="container mx-auto">
-            <a href="#" className="text-gray-500 hover:text-red-500">
-              Home
-            </a>
+            <Link to="/" className="text-gray-500 hover:text-red-500">Home</Link>
             <span className="mx-2 text-gray-400">/</span>
-            <a href="#" className="text-gray-500 hover:text-red-500">
-              Coffee Beans
-            </a>
+            <Link to="/products" className="text-gray-500 hover:text-red-500">Shop</Link>
             <span className="mx-2 text-gray-400">/</span>
-            <a href="#" className="text-gray-500 hover:text-red-500">
-              Ethiopia
-            </a>
+            <span className="text-gray-500">{product.categoryName}</span>
             <span className="mx-2 text-gray-400">/</span>
-            <span className="text-gray-900">Yirgacheffe</span>
+            <span className="text-gray-900 font-medium">{product.name}</span>
           </div>
         </div>
 
-        {/* 产品信息区域 */}
+        {/* Product Info Section */}
         <section className="container mx-auto py-8 px-4 md:px-8">
           <div className="flex flex-col md:flex-row md:space-x-8">
-            {/* 产品图片区域 */}
+            {/* Image Gallery */}
             <div className="md:w-1/2 mb-8 md:mb-0">
-              <div className="relative">
+              <div className="relative mb-4">
                 <img
-                  src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1440&q=80"
-                  alt="埃塞俄比亚耶加雪菲"
-                  className="w-full h-auto rounded-xl"
+                  src={mainImage}
+                  alt={product.name}
+                  className="w-full h-auto rounded-xl object-cover aspect-square shadow-sm"
                 />
               </div>
 
-              <div className="grid grid-cols-5 gap-2 mt-4">
-                <div className="border-2 border-red-500 rounded-lg overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80"
-                    alt="埃塞俄比亚耶加雪菲"
-                    className="w-full h-16 object-cover"
-                  />
+              {/* Thumbnails */}
+              {product.imageUrls && product.imageUrls.length > 1 && (
+                <div className="grid grid-cols-5 gap-2">
+                  {product.imageUrls.map((url, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => setSelectedImage(url)}
+                      className={`border-2 rounded-lg overflow-hidden cursor-pointer transition ${selectedImage === url ? 'border-red-500' : 'border-transparent hover:border-gray-300'}`}
+                    >
+                      <img
+                        src={url}
+                        alt={`${product.name} ${idx}`}
+                        className="w-full h-16 object-cover"
+                      />
+                    </div>
+                  ))}
                 </div>
-                <div className="border rounded-lg overflow-hidden hover:border-red-500 cursor-pointer">
-                  <img
-                    src="https://images.unsplash.com/photo-1587734182619-0f462b2b97c5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80"
-                    alt="咖啡豆特写"
-                    className="w-full h-16 object-cover"
-                  />
-                </div>
-                <div className="border rounded-lg overflow-hidden hover:border-red-500 cursor-pointer">
-                  <img
-                    src="https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80"
-                    alt="咖啡豆特写"
-                    className="w-full h-16 object-cover"
-                  />
-                </div>
-                <div className="border rounded-lg overflow-hidden hover:border-red-500 cursor-pointer">
-                  <img
-                    src="https://images.unsplash.com/photo-1544378382-5e394b6b4230?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80"
-                    alt="咖啡冲泡效果"
-                    className="w-full h-16 object-cover"
-                  />
-                </div>
-                <div className="border rounded-lg overflow-hidden hover:border-red-500 cursor-pointer">
-                  <img
-                    src="https://images.unsplash.com/photo-1513244608388-32427255be63?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80"
-                    alt="咖啡冲泡效果"
-                    className="w-full h-16 object-cover"
-                  />
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* 产品详细区域 */}
+            {/* Product Details */}
             <div className="md:w-1/2">
-              {/* 商品标签和基本信息 */}
               <div className="mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold mb-2">
-                  Ethiopia Yirgacheffe Coffee Beans
+                <h1 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900">
+                  {product.name}
                 </h1>
-                <p className="text-gray-500 mb-3">
-                  Premium coffee beans from high-altitude African regions
+                {product.brand && (
+                  <p className="text-sm text-gray-500 mb-1">Brand: {product.brand}</p>
+                )}
+                <p className="text-gray-600 mb-4 leading-relaxed">
+                  {product.description}
                 </p>
 
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="bg-gray-100 px-3 py-1 rounded-full text-sm">
-                    Light Roast
-                  </div>
-                  <div className="bg-gray-100 px-3 py-1 rounded-full text-sm">
-                    Ethiopia
-                  </div>
-                  <div className="bg-gray-100 px-3 py-1 rounded-full text-sm">
-                    Organic
-                  </div>
+                {/* Tags / Attributes */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {product.roastLevel && (
+                    <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-semibold">
+                      {product.roastLevel}
+                    </span>
+                  )}
+                  {product.origin && (
+                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
+                      {product.origin}
+                    </span>
+                  )}
+                  {product.processingMethod && (
+                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
+                      {product.processingMethod}
+                    </span>
+                  )}
                 </div>
 
-                <div className="flex items-center">
-                  <span className="text-3xl font-bold text-red-500 mr-3">
-                    ¥128
+                {/* Price */}
+                <div className="flex items-center mb-6">
+                  <span className="text-3xl font-bold text-red-500 mr-2">
+                    {product.currency === 'AUD' ? '$' : '¥'}{product.price}
                   </span>
+                  {product.stockStatus === 'OutOfStock' && (
+                    <span className="text-red-600 text-sm font-bold ml-4">Out of Stock</span>
+                  )}
                 </div>
               </div>
 
-              {/* 规格选择 */}
+              {/* Variant / Size Placeholder (Current model only has one size per product ID) */}
               <div className="mb-6">
-                <h3 className="font-bold mb-3">Size</h3>
-                <div className="flex flex-wrap gap-3">
-                  <button className="px-4 py-2 border-2 border-red-500 rounded-full text-red-500 bg-red-50">
-                    227g (Half Pound)
-                  </button>
-                  <button className="px-4 py-2 border rounded-full hover:border-red-500 hover:text-red-500">
-                    454g (1 Pound)
-                  </button>
-                  <button className="px-4 py-2 border rounded-full hover:border-red-500 hover:text-red-500">
-                    908g (2 Pounds)
-                  </button>
+                <h3 className="font-bold mb-2 text-gray-700">Specifications</h3>
+                <div className="flex gap-4 text-sm text-gray-600">
+                  {product.weight && <div className="border px-3 py-1 rounded">{product.weight}g / {product.unit}</div>}
+                  {product.size && <div className="border px-3 py-1 rounded">Size: {product.size}</div>}
                 </div>
               </div>
 
-              {/* 研磨选择 */}
-              <div className="mb-6">
-                <h3 className="font-bold mb-3">Grind</h3>
-                <div className="flex flex-wrap gap-3">
-                  <button className="px-4 py-2 border-2 border-red-500 rounded-full text-red-500 bg-red-50">
-                    Whole Bean
-                  </button>
-                  <button className="px-4 py-2 border rounded-full hover:border-red-500 hover:text-red-500">
-                    Coarse (French Press/Cold Brew)
-                  </button>
-                  <button className="px-4 py-2 border rounded-full hover:border-red-500 hover:text-red-500">
-                    Medium (Drip/Pour-over)
-                  </button>
-                  <button className="px-4 py-2 border rounded-full hover:border-red-500 hover:text-red-500">
-                    Fine (Moka Pot/Espresso)
-                  </button>
-                </div>
-              </div>
-
-              {/* 数量选择和购买按钮 */}
-              <div className="mb-6">
-                <h3 className="font-bold mb-3">Quantity</h3>
-                <div className="flex items-center space-x-5">
-                  <div className="quantity-selector">
-                    <button className="quantity-btn">-</button>
+              {/* Quantity Selector */}
+              <div className="mb-8">
+                <h3 className="font-bold mb-3 text-gray-700">Quantity</h3>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center border rounded-full">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="px-4 py-2 text-gray-600 hover:text-red-500 transition"
+                    >-</button>
                     <input
                       type="text"
-                      value="1"
-                      className="quantity-input"
+                      value={quantity}
                       readOnly
+                      className="w-12 text-center focus:outline-none"
                     />
-                    <button className="quantity-btn">+</button>
+                    <button
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="px-4 py-2 text-gray-600 hover:text-red-500 transition"
+                    >+</button>
                   </div>
                 </div>
               </div>
 
+              {/* Action Buttons */}
               <div className="flex space-x-4 mb-8">
-                <button className="btn-primary flex-1 py-3 px-6 rounded-full flex items-center justify-center">
+                <button
+                  disabled={product.stockStatus === 'OutOfStock'}
+                  onClick={() => {
+                    addToCart(product, quantity);
+                    alert(`Added ${quantity} x ${product.name} to cart!`);
+                  }}
+                  className={`flex-1 py-3 px-6 rounded-full flex items-center justify-center transition font-semibold ${product.stockStatus === 'OutOfStock' ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'bg-red-500 text-white hover:bg-red-600'}`}
+                >
                   <i className="fas fa-shopping-cart mr-2"></i>
                   Add to Cart
                 </button>
-
-                <button className="btn-base bg-black text-white hover:bg-gray-800 flex-1 py-3 px-6 rounded-full flex items-center justify-center">
-                  Buy Now
-                </button>
               </div>
 
-              {/* 商品特点简介*/}
-              <div className="border-t pt-6">
-                <h3 className="font-bold mb-4">Features</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-start">
-                    <i className="fas fa-check-circle text-red-500 mt-1 mr-3"></i>
-                    <span>
-                      Distinct citrus and floral flavors with slight berry
-                      acidity
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <i className="fas fa-check-circle text-red-500 mt-1 mr-3"></i>
-                    <span>From high-altitude plantations at 1800-2200m</span>
-                  </li>
-                  <li className="flex items-start">
-                    <i className="fas fa-check-circle text-red-500 mt-1 mr-3"></i>
-                    <span>
-                      Carefully selected European sun-dried beans ensuring
-                      consistent flavor
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <i className="fas fa-check-circle text-red-500 mt-1 mr-3"></i>
-                    <span>
-                      Suitable for pour-over, siphon, and other brewing methods
-                      highlighting flavor
-                    </span>
-                  </li>
-                </ul>
-              </div>
+              {/* Quick Features List */}
+              {product.flavorNotes && product.flavorNotes.length > 0 && (
+                <div className="border-t pt-6">
+                  <h3 className="font-bold mb-4 text-gray-800">Flavor Profile</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.flavorNotes.map((note, i) => (
+                      <span key={i} className="bg-gray-50 text-gray-700 px-3 py-1 rounded-md text-sm border">
+                        {note}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
 
-        {/* 详细标签页 */}
-        <section className="container mx-auto px-4 md:px-8">
-          <div className="border-b">
-            <div className="flex">
-              <button className="py-3 px-6 text-center font-medium tab-active">
-                Details
+        {/* Detailed Tabs Section */}
+        <section className="container mx-auto px-4 md:px-8 mb-16">
+          <div className="border-b mb-8">
+            <div className="flex space-x-8">
+              <button
+                onClick={() => setActiveTab('details')}
+                className={`py-4 px-2 font-medium border-b-2 transition ${activeTab === 'details' ? 'border-red-500 text-red-500' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              >
+                Product Details
               </button>
-              <button className="py-3 px-6 text-center font-medium text-gray-500 hover:text-red-500">
-                Specs
-              </button>
-              <button className="py-3 px-6 text-center font-medium text-gray-500 hover:text-red-500">
-                Brewing Guide
-              </button>
-              <button className="py-3 px-6 text-center font-medium text-gray-500 hover:text-red-500">
-                Shipping
+              <button
+                onClick={() => setActiveTab('specs')}
+                className={`py-4 px-2 font-medium border-b-2 transition ${activeTab === 'specs' ? 'border-red-500 text-red-500' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              >
+                Technical Specs
               </button>
             </div>
           </div>
 
-          {/* 商品详细内容 */}
-          <div className="py-8">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="text-2xl font-bold mb-6">Product Introduction</h2>
-
-              <div className="mb-10">
-                <p className="text-gray-700 mb-4">
-                  Yirgacheffe is one of Ethiopia's most famous coffee regions
-                  and a representative area for specialty coffee. The coffee
-                  beans produced here are world-renowned for their outstanding
-                  floral and citrus flavors, regarded by many coffee lovers as
-                  the epitome of specialty coffee.
+          <div className="bg-white rounded-xl">
+            {activeTab === 'details' && (
+              <div className="max-w-3xl">
+                <h2 className="text-2xl font-bold mb-4">About this coffee</h2>
+                <p className="text-gray-600 leading-relaxed mb-6">
+                  {product.description || "No detailed description available."}
                 </p>
-                <p className="text-gray-700 mb-4">
-                  Our Yirgacheffe coffee beans come from high-altitude
-                  plantations at 1800-2200 meters. This high-altitude
-                  environment causes the coffee beans to grow slowly, resulting
-                  in more complex and rich flavors. The coffee trees grow in an
-                  organic natural environment without the use of any chemical
-                  fertilizers or pesticides, ensuring the pure quality of the
-                  coffee.
-                </p>
-                <p className="text-gray-700">
-                  This coffee uses traditional sun-drying processing, fully
-                  preserving the original flavor of the coffee beans. Light
-                  roasting perfectly showcases Yirgacheffe's unique flavor
-                  characteristics: bright citrus acidity, accompanied by aromas
-                  of jasmine and bergamot, with a finish featuring slight
-                  caramel sweetness and a tea-like crispness.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                <img
-                  src="https://images.unsplash.com/photo-1599638075908-9412e9e2e586?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=700&q=80"
-                  alt="咖啡种植园"
-                  className="rounded-lg"
-                />
-                <img
-                  src="https://images.unsplash.com/photo-1504973169753-4c48c9d734d9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=700&q=80"
-                  alt="咖啡加工工艺"
-                  className="rounded-lg"
-                />
-              </div>
-
-              <div className="mb-10">
-                <h3 className="text-xl font-bold mb-4">Flavor Profile</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-gray-50 p-4 rounded-lg text-center">
-                    <div className="text-xl mb-2">🍋</div>
-                    <div className="font-medium">Citrus</div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg text-center">
-                    <div className="text-xl mb-2">🌸</div>
-                    <div className="font-medium">Jasmine</div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg text-center">
-                    <div className="text-xl mb-2">🫐</div>
-                    <div className="font-medium">Blueberry</div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg text-center">
-                    <div className="text-xl mb-2">🍯</div>
-                    <div className="font-medium">Honey</div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="font-medium mb-2">Acidity</div>
-                    <div className="w-full bg-gray-200 h-2 rounded-full">
-                      <div
-                        className="bg-red-500 h-2 rounded-full"
-                        style={{ width: "80%" }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between text-xs mt-1 text-gray-500">
-                      <span>Low</span>
-                      <span>High</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="font-medium mb-2">Body</div>
-                    <div className="w-full bg-gray-200 h-2 rounded-full">
-                      <div
-                        className="bg-red-500 h-2 rounded-full"
-                        style={{ width: "60%" }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between text-xs mt-1 text-gray-500">
-                      <span>Low</span>
-                      <span>High</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="font-medium mb-2">Sweetness</div>
-                    <div className="w-full bg-gray-200 h-2 rounded-full">
-                      <div
-                        className="bg-red-500 h-2 rounded-full"
-                        style={{ width: "75%" }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between text-xs mt-1 text-gray-500">
-                      <span>Low</span>
-                      <span>High</span>
-                    </div>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Placeholder for rich content images if we had them in DB, for now using gallery images if available */}
+                  {product.imageUrls[1] && <img src={product.imageUrls[1]} className="rounded-lg w-full h-64 object-cover" />}
+                  {product.imageUrls[2] && <img src={product.imageUrls[2]} className="rounded-lg w-full h-64 object-cover" />}
                 </div>
               </div>
+            )}
 
-              <div className="mb-10">
-                <h3 className="text-xl font-bold mb-4">Specifications</h3>
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4">
-                    <div className="flex">
-                      <span className="w-24 text-gray-500">Origin:</span>
-                      <span>Ethiopia Yirgacheffe</span>
-                    </div>
-                    <div className="flex">
-                      <span className="w-24 text-gray-500">Altitude:</span>
-                      <span>1800-2200m</span>
-                    </div>
-                    <div className="flex">
-                      <span className="w-24 text-gray-500">Varietal:</span>
-                      <span>Ethiopia Heirloom</span>
-                    </div>
-                    <div className="flex">
-                      <span className="w-24 text-gray-500">Process:</span>
-                      <span>Natural</span>
-                    </div>
-                    <div className="flex">
-                      <span className="w-24 text-gray-500">Roast:</span>
-                      <span>Light Roast</span>
-                    </div>
-                    <div className="flex">
-                      <span className="w-24 text-gray-500">Best For:</span>
-                      <span>Pour-over, Siphon, Drip</span>
-                    </div>
-                    <div className="flex">
-                      <span className="w-24 text-gray-500">Shelf Life:</span>
-                      <span>12 Months (Unopened)</span>
-                    </div>
-                    <div className="flex">
-                      <span className="w-24 text-gray-500">Storage:</span>
-                      <span>Sealed, cool, dry place</span>
-                    </div>
-                  </div>
-                </div>
+            {activeTab === 'specs' && (
+              <div className="max-w-2xl bg-gray-50 rounded-xl p-8">
+                <table className="w-full text-left">
+                  <tbody>
+                    {product.origin && (
+                      <tr className="border-b border-gray-200">
+                        <th className="py-3 text-gray-500 font-medium w-1/3">Origin</th>
+                        <td className="py-3 text-gray-900">{product.origin}</td>
+                      </tr>
+                    )}
+                    {product.altitude && (
+                      <tr className="border-b border-gray-200">
+                        <th className="py-3 text-gray-500 font-medium w-1/3">Altitude</th>
+                        <td className="py-3 text-gray-900">{product.altitude}m</td>
+                      </tr>
+                    )}
+                    {product.varietals && (
+                      <tr className="border-b border-gray-200">
+                        <th className="py-3 text-gray-500 font-medium w-1/3">Varietal</th>
+                        <td className="py-3 text-gray-900">{product.varietals}</td>
+                      </tr>
+                    )}
+                    {product.processingMethod && (
+                      <tr className="border-b border-gray-200">
+                        <th className="py-3 text-gray-500 font-medium w-1/3">Process</th>
+                        <td className="py-3 text-gray-900">{product.processingMethod}</td>
+                      </tr>
+                    )}
+                    {product.harvestYear && (
+                      <tr className="border-b border-gray-200">
+                        <th className="py-3 text-gray-500 font-medium w-1/3">Harvest Year</th>
+                        <td className="py-3 text-gray-900">{product.harvestYear}</td>
+                      </tr>
+                    )}
+                    {product.cuppingScore && (
+                      <tr className="border-b border-gray-200">
+                        <th className="py-3 text-gray-500 font-medium w-1/3">Cupping Score</th>
+                        <td className="py-3 text-gray-900">{product.cuppingScore}</td>
+                      </tr>
+                    )}
+                    {product.material && (
+                      <tr className="border-b border-gray-200">
+                        <th className="py-3 text-gray-500 font-medium w-1/3">Material</th>
+                        <td className="py-3 text-gray-900">{product.material}</td>
+                      </tr>
+                    )}
+                    {product.specifications && (
+                      <tr className="border-b border-gray-200">
+                        <th className="py-3 text-gray-500 font-medium w-1/3">Specs</th>
+                        <td className="py-3 text-gray-900">{product.specifications}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-            </div>
+            )}
           </div>
         </section>
       </main>
