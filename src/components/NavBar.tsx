@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import { useCart } from "./CartContext";
 
 
 const CustomerLink = ({
@@ -31,11 +32,10 @@ const CustomerLink = ({
           });
         }
 
-        return `${
-          active
-            ? "text-red-500  border-red-500 border-b-2"
-            : "text-black border-transparent hover:text-red-500"
-        } ${className}`;
+        return `${active
+          ? "text-red-500  border-red-500 border-b-2"
+          : "text-black border-transparent hover:text-red-500"
+          } ${className}`;
       }}
     >
       {children}
@@ -46,6 +46,8 @@ const CustomerLink = ({
 const NavBar: React.FC = () => {
   // 使用全局 AuthContext，状态变化时组建会自动更新
   const { isAuthenticated } = useAuth();
+  const { cartCount } = useCart();
+
 
   return (
     <>
@@ -63,16 +65,10 @@ const NavBar: React.FC = () => {
             Home
           </CustomerLink>
           <CustomerLink
-            to="/products?category=coffee"
+            to="/products"
             className="text-black hover:text-red-500 transition"
           >
-            Coffee Series
-          </CustomerLink>
-          <CustomerLink
-            to="/products?category=accessories"
-            className="text-black hover:text-red-500 transition"
-          >
-            Accessories
+            Shop
           </CustomerLink>
           <a href="#" className="text-black hover:text-red-500 transition">
             About Us
@@ -104,9 +100,11 @@ const NavBar: React.FC = () => {
             className="text-black hover:text-red-500 transition relative"
           >
             <i className="fas fa-shopping-bag"></i>
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              3
-            </span>
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
           </CustomerLink>
           <button className="md:hidden text-black">
             <i className="fas fa-bars"></i>

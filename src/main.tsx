@@ -17,31 +17,35 @@ import MyShoppingCart from "./pages/MyShoppingCart";
 import Profile from "./pages/Profile";
 import SettingPage from "./pages/SettingPage";
 import WishList from "./pages/WishList";
-import {AuthProvider} from "./components/AuthContext";
+import { AuthProvider } from "./components/AuthContext";
+import { CartProvider } from "./components/CartContext";
+
 
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/products/:id" element={<ProductDetail />} />
-            <Route path="/address" element={<Address />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/myorders" element={<MyOrders />} />
-            <Route path="/paymethod" element={<PayMethod />} />
-            <Route path="/ordercomplete" element={<OrderComplete />} />
-            <Route path="/myshoppingcart" element={<MyShoppingCart />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/setting" element={<SettingPage />} />
-            <Route path="/wishlist" element={<WishList />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <CartProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
+              <Route path="/address" element={<Address />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/myorders" element={<MyOrders />} />
+              <Route path="/paymethod" element={<PayMethod />} />
+              <Route path="/ordercomplete" element={<OrderComplete />} />
+              <Route path="/myshoppingcart" element={<MyShoppingCart />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/setting" element={<SettingPage />} />
+              <Route path="/wishlist" element={<WishList />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </CartProvider>
     </AuthProvider>
   </StrictMode>,
 );
