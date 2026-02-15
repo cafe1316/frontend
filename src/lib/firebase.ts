@@ -11,6 +11,13 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_APP_ID,
 };
 
+// Debug: Check if env vars are loaded
+console.log("Firebase Config Loaded from Environment:", {
+  apiKey: firebaseConfig.apiKey ? "******" + firebaseConfig.apiKey.slice(-4) : "MISSING",
+  authDomain: firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId
+});
+
 // 安全检查：防止在没有环境变量的情况下崩溃 (比如在 Vercel 构建时或未配置时)
 const isConfigValid = !!firebaseConfig.apiKey;
 

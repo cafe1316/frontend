@@ -1,8 +1,58 @@
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import homeHeroImage from "../assets/images/HomeHero.jpg";
 import Button from "../components/Button";
+import { productService } from "../api/services/productService";
+import { categoryService } from "../api/services/categoryService";
+import { useCart } from "../components/CartContext";
+import { ProductListDto } from "../api/types/product";
+import { CategoryWithSubsDto } from "../api/types/category";
 
 // 首页组件
 const HomePage = () => {
+  const { addToCart } = useCart();
+  const [featuredProducts, setFeaturedProducts] = useState<ProductListDto[]>([]);
+  const [categories, setCategories] = useState<CategoryWithSubsDto[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Hardcoded images for categories as backend doesn't provide them yet
+  const categoryImages: Record<string, string> = {
+    "Coffee Beans": "https://images.unsplash.com/photo-1511537190424-bbbab87ac5eb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1440&q=80",
+    "Brewing Gear": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?ixlib=rb-4.0.3&auto=format&fit=crop&w=1440&q=80",
+    "Gift Sets": "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1440&q=80",
+    "Default": "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1440&q=80"
+  };
+
+  const categoryDescriptions: Record<string, string> = {
+    "Coffee Beans": "Selected coffee beans from top global regions, bringing you a pure taste experience.",
+    "Brewing Gear": "Professional brewing equipment, allowing you to enjoy cafe-level taste at home.",
+    "Gift Sets": "Carefully curated coffee gift sets, the perfect choice for loved ones and friends.",
+    "Default": "Discover our amazing collection."
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [products, cats] = await Promise.all([
+          productService.getFeaturedProducts(4),
+          categoryService.getAllCategories()
+        ]);
+        setFeaturedProducts(products);
+        setCategories(cats.slice(0, 3)); // Display top 3 categories
+      } catch (error) {
+        console.error("Failed to fetch homepage data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleAddToCart = (e: React.MouseEvent, product: ProductListDto) => {
+    e.preventDefault(); // Prevent navigation
+    addToCart(product, 1);
+  };
+
   return (
     <main className="flex-1 overflow-hidden">
       {/* hero area */}
@@ -24,7 +74,9 @@ const HomePage = () => {
             Explore our carefully selected coffee beans and experience unique
             flavors from around the world.
           </p>
-          <Button className="px-8 py-3 text-lg">Shop Now</Button>
+          <Link to="/products">
+            <Button className="px-8 py-3 text-lg">Shop Now</Button>
+          </Link>
         </div>
       </section>
 
@@ -34,65 +86,34 @@ const HomePage = () => {
           Explore Our Collections
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition card-hover">
-            <div className="h-48 overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1511537190424-bbbab87ac5eb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1440&q=80"
-                alt="咖啡豆"
-                className="w-full h-full object-cover hover:scale-105 transition duration-500"
-              />
-            </div>
-            <div className="p-6">
-              <h3 className="text-xl font-bold mb-2">Premium Coffee Beans</h3>
-              <p className="text-sm mb-4">
-                Selected coffee beans from top global regions, bringing you a
-                pure taste experience.
-              </p>
-              <a href="#" className="text-red-500 flex items-center">
-                View Collection <i className="fas fa-arrow-right ml-2"></i>
-              </a>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition card-hover">
-            <div className="h-48 overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1440&q=80"
-                alt="冲泡装备"
-                className="w-full h-full object-cover hover:scale-105 transition duration-500"
-              />
-            </div>
-            <div className="p-6">
-              <h3 className="text-xl font-bold mb-2">Brewing Gear</h3>
-              <p className="text-sm mb-4">
-                Professional brewing equipment, allowing you to enjoy cafe-level
-                taste at home.
-              </p>
-              <a href="#" className="text-red-500 flex items-center">
-                View Collection <i className="fas fa-arrow-right ml-2"></i>
-              </a>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition card-hover">
-            <div className="h-48 overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1440&q=80"
-                alt="礼品套装"
-                className="w-full h-full object-cover hover:scale-105 transition duration-500"
-              />
-            </div>
-            <div className="p-6">
-              <h3 className="text-xl font-bold mb-2">Gift Sets</h3>
-              <p className="text-sm mb-4">
-                Carefully curated coffee gift sets, the perfect choice for loved
-                ones and friends.
-              </p>
-              <a href="#" className="text-red-500 flex items-center">
-                View Collection <i className="fas fa-arrow-right ml-2"></i>
-              </a>
-            </div>
-          </div>
+          {loading ? (
+            Array(3).fill(0).map((_, idx) => (
+              <div key={idx} className="bg-gray-100 rounded-xl h-96 animate-pulse"></div>
+            ))
+          ) : categories.length > 0 ? (
+            categories.map(cat => (
+              <div key={cat.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition card-hover group">
+                <div className="h-48 overflow-hidden">
+                  <img
+                    src={categoryImages[cat.name] || categoryImages["Default"]}
+                    alt={cat.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                  />
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold mb-2">{cat.name}</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    {categoryDescriptions[cat.name] || categoryDescriptions["Default"]}
+                  </p>
+                  <Link to={`/products?categoryId=${cat.id}`} className="text-red-500 flex items-center hover:text-red-600">
+                    View Collection <i className="fas fa-arrow-right ml-2"></i>
+                  </Link>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-3 text-center text-gray-500">No categories found.</div>
+          )}
         </div>
       </section>
 
@@ -100,93 +121,48 @@ const HomePage = () => {
       <section className="py-12 px-8 md:px-16 bg-gray-50">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold">Best Sellers</h2>
-          <a href="#" className="text-red-500 flex items-center">
+          <Link to="/products" className="text-red-500 flex items-center hover:text-red-600">
             View All <i className="fas fa-arrow-right ml-2"></i>
-          </a>
+          </Link>
         </div>
 
-        <div className="flex space-x-6 overflow-x-auto product-container pb-4">
-          {/*<!-- 产品1 -->*/}
-          <div className="min-w-[280px] bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 card-hover">
-            <div className="relative mb-4">
-              <img
-                src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1440&q=80"
-                alt="埃塞俄比亚耶加雪菲"
-                className="w-full h-48 object-cover rounded-lg"
-              />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 pb-4">
+          {loading ? (
+            Array(4).fill(0).map((_, idx) => (
+              <div key={idx} className="bg-white p-4 rounded-xl shadow-sm h-80 animate-pulse"></div>
+            ))
+          ) : featuredProducts.length > 0 ? (
+            featuredProducts.map(product => (
+              <Link to={`/products/${product.id}`} key={product.id} className="block group">
+                <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 card-hover h-full flex flex-col">
+                  <div className="relative mb-4 overflow-hidden rounded-lg aspect-square bg-gray-100">
+                    <img
+                      src={product.mainImageUrl || "https://placehold.co/400x400?text=No+Image"}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                    />
+                  </div>
+                  <h3 className="font-bold mb-1 truncate">{product.name}</h3>
+                  <p className="text-sm text-gray-600 mb-2 truncate">
+                    {product.roastLevel || "Coffee"}
+                  </p>
+                  <div className="flex justify-between items-center mt-auto">
+                    <span className="font-bold">¥{product.price.toFixed(2)}</span>
+                    <button
+                      onClick={(e) => handleAddToCart(e, product)}
+                      className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition shadow-sm hover:shadow active:scale-95"
+                    >
+                      <i className="fas fa-plus"></i>
+                    </button>
+                  </div>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <div className="col-span-4 text-center py-12 text-gray-500">
+              No featured products available.
             </div>
-            <h3 className="font-bold mb-1">Ethiopia Yirgacheffe</h3>
-            <p className="text-sm text-gray-600 mb-2">
-              Floral, fruity, clean finish
-            </p>
-            <div className="flex justify-between items-center">
-              <span className="font-bold">¥128</span>
-              <button className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition">
-                <i className="fas fa-plus"></i>
-              </button>
-            </div>
-          </div>
-
-          {/*<!-- 产品2 -->*/}
-          <div className="min-w-[280px] bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 card-hover">
-            <div className="mb-4">
-              <img
-                src="https://images.unsplash.com/photo-1572286258217-215cf8e294f9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1440&q=80"
-                alt="手冲咖啡套装"
-                className="w-full h-48 object-cover rounded-lg"
-              />
-            </div>
-            <h3 className="font-bold mb-1">Pour-over Coffee Set</h3>
-            <p className="text-sm text-gray-600 mb-2">Essential starter kit</p>
-            <div className="flex justify-between items-center">
-              <span className="font-bold">¥399</span>
-              <button className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition">
-                <i className="fas fa-plus"></i>
-              </button>
-            </div>
-          </div>
-
-          {/*<!-- 产品3 -->*/}
-          <div className="min-w-[280px] bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 card-hover">
-            <div className="relative mb-4">
-              <img
-                src="https://images.unsplash.com/photo-1610632380989-680fe40816c6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1440&q=80"
-                alt="冷萃咖啡瓶"
-                className="w-full h-48 object-cover rounded-lg"
-              />
-            </div>
-            <h3 className="font-bold mb-1">Cold Brew Bottle</h3>
-            <p className="text-sm text-gray-600 mb-2">
-              Portable cold brew maker
-            </p>
-            <div className="flex justify-between items-center">
-              <span className="font-bold">¥159</span>
-              <button className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition">
-                <i className="fas fa-plus"></i>
-              </button>
-            </div>
-          </div>
-
-          {/*<!-- 产品4 -->*/}
-          <div className="min-w-[280px] bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 card-hover">
-            <div className="mb-4">
-              <img
-                src="https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1440&q=80"
-                alt="哥伦比亚咖啡豆"
-                className="w-full h-48 object-cover rounded-lg"
-              />
-            </div>
-            <h3 className="font-bold mb-1">Colombia Coffee Beans</h3>
-            <p className="text-sm text-gray-600 mb-2">
-              Balanced, caramel sweetness
-            </p>
-            <div className="flex justify-between items-center">
-              <span className="font-bold">¥118</span>
-              <button className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition">
-                <i className="fas fa-plus"></i>
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </section>
     </main>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { productService } from '../api/services/productService';
 import { categoryService } from '../api/services/categoryService';
 import { ProductListDto, ProductSortOption, ProductFilterParams } from '../api/types/product';
@@ -9,6 +10,8 @@ import ProductGrid from '../components/products/ProductGrid';
 import Pagination from '../components/products/Pagination';
 
 export default function ProductsPage() {
+  const [searchParams] = useSearchParams();
+
   // Integation State
   const [products, setProducts] = useState<ProductListDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +33,9 @@ export default function ProductsPage() {
     searchTerm: '',
     isOrganic: false,
     isSeasonal: false,
-    isNewArrival: false
+    isNewArrival: false,
+    // Initialize categoryId from URL if present
+    categoryId: searchParams.get('categoryId') ? Number(searchParams.get('categoryId')) : undefined
   });
 
   // Debounce search term separately
