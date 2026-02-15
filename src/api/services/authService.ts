@@ -1,5 +1,5 @@
 import axiosInstance from '../axiosInstance';
-import { GoogleLoginDto, AuthResponseDto } from '../types/auth';
+import { GoogleLoginDto, AuthResponseDto, UserDto } from '../types/index';
 
 /**
  * Auth API Service
@@ -16,4 +16,13 @@ export const authService = {
         } as GoogleLoginDto);
         return response.data;
     },
+
+    /**
+     * 获取当前用户信息 (Profile)
+     * GET /api/auth/me
+     */
+    getCurrentUser: async (): Promise<UserDto> => {
+        const response = await axiosInstance.get<UserDto>('/auth/me');
+        return response.data;
+    }
 };

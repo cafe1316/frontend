@@ -70,9 +70,12 @@ const NavBar: React.FC = () => {
           >
             Shop
           </CustomerLink>
-          <a href="#" className="text-black hover:text-red-500 transition">
+          <CustomerLink
+            to="/about"
+            className="text-black hover:text-red-500 transition"
+          >
             About Us
-          </a>
+          </CustomerLink>
         </div>
 
         <div className="flex items-center space-x-6">
@@ -95,6 +98,22 @@ const NavBar: React.FC = () => {
           >
             <i className="fas fa-user"></i>
           </CustomerLink>
+
+          {isAuthenticated && (
+            <button
+              onClick={() => {
+                // Simple logout trigger
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                window.location.href = "/";
+              }}
+              className="text-black hover:text-red-500 transition"
+              title="Log Out"
+            >
+              <i className="fas fa-sign-out-alt"></i>
+            </button>
+          )}
+
           <CustomerLink
             to="/myshoppingcart"
             className="text-black hover:text-red-500 transition relative"
