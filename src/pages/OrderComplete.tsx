@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { orderService } from "../api/services/orderService";
 import { OrderDto } from "../api/types/index";
 
 const OrderComplete = () => {
-    const location = useLocation();
     const [order, setOrder] = useState<OrderDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [retryCount, setRetryCount] = useState(0);

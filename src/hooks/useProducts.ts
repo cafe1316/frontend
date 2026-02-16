@@ -16,7 +16,7 @@ export const useProducts = () => {
                 setLoading(true);
                 setError(null);
                 const data = await productService.getAllProducts();
-                setProducts(data);
+                setProducts(data.items);
             } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : '获取商品失败';
                 setError(errorMessage);
