@@ -51,6 +51,21 @@ const StripePaymentForm = ({ checkoutIntentId, amount }: { checkoutIntentId: str
 
     return (
         <form onSubmit={handleSubmit}>
+            {/* Test Mode Banner */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm text-blue-800">
+                <p className="font-bold mb-2 flex items-center">
+                    <i className="fas fa-info-circle mr-2"></i>
+                    Test Mode Active
+                </p>
+                <p className="mb-2">To test payment, use these details:</p>
+                <ul className="list-disc list-inside space-y-1 font-mono text-xs bg-white p-2 rounded border border-blue-100">
+                    <li>Card: 4242 4242 4242 4242</li>
+                    <li>Expiry: 12 / 30</li>
+                    <li>CVC: 123</li>
+                    <li>Zip: 12345</li>
+                </ul>
+            </div>
+
             <PaymentElement />
             {message && <div className="text-red-500 mt-4 text-sm">{message}</div>}
             <button
