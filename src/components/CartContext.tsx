@@ -87,16 +87,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [cartItems, isAuthenticated]);
 
     const addToCart = async (product: any, quantity: number, options?: { size?: string; grind?: string }) => {
+        // Snapshot the current state BEFORE any modifications
+        const previousItems = [...cartItems];
+
         // Optimistic Update
         const uniqueId = `${product.id}-${options?.size || 'default'}-${options?.grind || 'default'}`;
-
-        // Use a temp variable for the new state to send correct data if needed, 
-        // but for simpler sync we can update local first then call API.
 
         let newItemAdded: CartItem | null = null;
 
         setCartItems((prevItems) => {
-            const existingItemIndex = prevItems.findIndex((item) => item.id === uniqueId || (isAuthenticated && item.productId === product.id)); // Simple check for now
+            const existingItemIndex = prevItems.findIndex((item) => item.id === uniqueId || (isAuthenticated && item.productId === product.id));
 
             if (existingItemIndex > -1) {
                 const newItems = [...prevItems];
@@ -122,15 +122,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Backend Sync
         if (isAuthenticated) {
             try {
-                // Determine if it was an update or add (simplification: just call addToCart endpoint)
-                // The API implementation of addToCart usually handles "add to existing" logic.
                 await cartService.addToCart(product.id, quantity);
-                // Optionally refetch full cart to ensure IDs match server
-                // const updatedCart = await cartService.getMyCart();
-                // setCartItems(mapServerToClient(updatedCart));
             } catch (err) {
-                console.error("Failed to add to server cart", err);
-                alert("Failed to save to cloud cart. Please check your connection.");
+                console.error("Failed to add to server cart, rolling back UI", err);
+                setCartItems(previousItems); // Rollback to the clean snapshot
+                alert("Failed to save to cloud cart. Your local cart has been restored.");
             }
         }
     };

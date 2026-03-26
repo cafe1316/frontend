@@ -8,22 +8,24 @@ import {
 import { UserDto } from "../api/types/index";
 import { authService } from "../api/services/authService";
 
-// 1. 定义状态类型
+// --- 第一站：定義數據結構 ---
+// AuthState 是整門店的「登錄狀態記錄本」
 interface AuthState {
-  isAuthenticated: boolean;
-  token: string | null;
-  user: UserDto | null;
-  isLoading: boolean;
+  isAuthenticated: boolean; // 是否已登錄
+  token: string | null;      // 我們的自家 JWT 令牌
+  user: UserDto | null;      // 用戶基本資料（頭像、姓名）
+  isLoading: boolean;        // 是否正在核對清單
 }
 
-// 2. 定义操作类型 (Action)
+// --- 第二站：定義動作指令 (Actions) ---
+// 就像命令清單，告訴狀態管理員要幹什麼
 type AuthAction =
-  | { type: "LOGIN"; payload: { token: string; user: UserDto } }
-  | { type: "LOGOUT" }
-  | { type: "SET_USER"; payload: UserDto }
-  | { type: "SET_LOADING"; payload: boolean };
+  | { type: "LOGIN"; payload: { token: string; user: UserDto } } // 指令：執行登錄，並帶上新令牌和用戶資料
+  | { type: "LOGOUT" }                                            // 指令：執行登出，清空一切
+  | { type: "SET_USER"; payload: UserDto }                        // 指令：僅更新用戶資料
+  | { type: "SET_LOADING"; payload: boolean };                    // 指令：設置加載狀態
 
-// 3. 初始状态
+// 初始狀態：默認所有人都是遊客，還在加載中
 const initialState: AuthState = {
   isAuthenticated: false,
   token: null,
@@ -31,7 +33,9 @@ const initialState: AuthState = {
   isLoading: true,
 };
 
-// 4. Reducer (交警)：处理状态变更逻辑
+// --- 第三站：狀態管理員 (Reducer) ---
+// 它是個「純函數」，根據指令(Action)返回新的狀態(State)
+// 它不負責調用 API，只負責根據 API 的結果來更新記錄本
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
     case "LOGIN":
@@ -51,21 +55,15 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isLoading: false,
       };
     case "SET_USER":
-      return {
-        ...state,
-        user: action.payload,
-      };
+      return { ...state, user: action.payload };
     case "SET_LOADING":
-      return {
-        ...state,
-        isLoading: action.payload,
-      };
+      return { ...state, isLoading: action.payload };
     default:
       return state;
   }
 };
 
-// 5. 创建 Context
+// --- 第四站：廣播站接口 (Context) ---
 interface AuthContextType extends AuthState {
   login: (token: string, user: UserDto) => void;
   logout: () => void;
@@ -74,30 +72,34 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 6. Provider 组件
+// --- 第五站：廣播站發射器 (Provider) ---
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  // 使用 useReducer 來管理核心狀態
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Helper to fetch profile from API
+  // 向後端請求獲取當前用戶最新資料
   const apiFetchProfile = async (token?: string) => {
     try {
+      // 只有在瀏覽器裡有 token 時，才去後端問「我是誰」
       if (!token && !state.token) return;
+
+      // 調用 authService.ts（通訊員）發送 GET /api/auth/me
       const user = await authService.getCurrentUser();
+
+      // 更新本地存儲，防止刷新頁面丟失
       localStorage.setItem("user", JSON.stringify(user));
+
+      // 發送指令給 Reducer，更新資料
       dispatch({ type: "SET_USER", payload: user });
 
-      // If we had a token but no user authenticated state, login fully
+      // 如果有 Token 但還沒顯示登錄，自動完成「登錄中」狀態
       if (token && !state.isAuthenticated) {
-        dispatch({
-          type: "LOGIN",
-          payload: { token, user },
-        });
+        dispatch({ type: "LOGIN", payload: { token, user } });
       }
     } catch (error: any) {
-      console.error("Failed to fetch user profile", error);
-      // Auto-logout if user not found (e.g. DB reset)
+      console.error("獲取用戶資料失敗", error);
+      // 如果後端說 Token 沒用了 (404/401)，自動登出
       if (error.response?.status === 404) {
-        console.warn("User not found, logging out...");
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         dispatch({ type: "LOGOUT" });
@@ -107,6 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // 初始掛載：當用戶重新打開瀏覽器時的「恢復現場」
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -115,32 +118,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
-          dispatch({
-            type: "LOGIN",
-            payload: { token, user },
-          });
+          dispatch({ type: "LOGIN", payload: { token, user } });
         } catch (e) {
-          console.error("Failed to parse user from local storage", e);
           localStorage.removeItem("user");
         }
       }
-      // Always try to refresh from API
+      // 異步去後端核實最新的資料 Always try to refresh from API
       apiFetchProfile(token);
     } else {
       dispatch({ type: "SET_LOADING", payload: false });
     }
   }, []);
 
+  // 當 Login.tsx 組件成功拿到後端返回的 JWT 後，調用這個函數
   const login = (token: string, user: UserDto) => {
+    // 1. 存入瀏覽器保險箱
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
 
+    // 2. 廣播告訴全站：我們登錄啦！
     dispatch({
       type: "LOGIN",
-      payload: {
-        token,
-        user,
-      },
+      payload: { token, user },
     });
   };
 
@@ -168,7 +167,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// 7. 自定义 Hook：方便在组件里使用
+// --- 第六站：自定義 Hook (用來方便組件調用) ---
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
