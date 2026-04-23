@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ProductListDto, FlavorNote } from "../../api/types/product";
 import { useCart } from "../CartContext";
+import toast from 'react-hot-toast';
 
 interface ProductGridProps {
     products: ProductListDto[];
@@ -55,7 +56,7 @@ export default function ProductGrid({ products, loading }: ProductGridProps) {
                         <button
                             onClick={() => {
                                 addToCart(product, 1);
-                                alert(`Added ${product.name} to cart!`);
+                                toast.success(`Added ${product.name} to cart!`);
                             }}
                             className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition z-10 relative"
                         >

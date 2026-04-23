@@ -7,6 +7,7 @@ import { categoryService } from "../api/services/categoryService";
 import { useCart } from "../components/CartContext";
 import { ProductListDto } from "../api/types/product";
 import { CategoryWithSubsDto } from "../api/types/category";
+import toast from 'react-hot-toast';
 
 // 首页组件
 const HomePage = () => {
@@ -39,8 +40,9 @@ const HomePage = () => {
         ]);
         setFeaturedProducts(products);
         setCategories(cats.slice(0, 3)); // Display top 3 categories
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch homepage data", error);
+        toast.error(error.userMessage ?? 'Failed to load homepage content. Please refresh.');
       } finally {
         setLoading(false);
       }

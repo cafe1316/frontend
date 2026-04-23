@@ -3,6 +3,7 @@ import AccountSideBar from '../components/AccountSideBar';
 import { orderService } from "../api/services/orderService";
 import { OrderDto } from "../api/types/index";
 import { Link } from "react-router-dom";
+import toast from 'react-hot-toast';
 
 const MyOrders = () => {
     const [orders, setOrders] = useState<OrderDto[]>([]);
@@ -18,8 +19,9 @@ const MyOrders = () => {
             setOrders(result.items);
             setTotalPages(result.totalPages);
             setCurrentPage(result.page);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to fetch orders", error);
+            toast.error(error.userMessage ?? 'Failed to load orders. Please refresh.');
         } finally {
             setLoading(false);
         }

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { cartService } from "../api/services/cartService";
+import toast from 'react-hot-toast';
 
 // Cart Item Interface
 export interface CartItem {
@@ -42,11 +43,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // If logged in, fetch from API
             if (isAuthenticated) {
                 try {
-                    const serverCart: any = await cartService.getMyCart(); // Temporarily cast to any to avoid type check if DTO definition is outdated
+                    const serverCart = await cartService.getMyCart();
 
                     // The API returns { items: [], totalItems: 0, ... }
                     // We need to map serverCart.items
-                    const cartItemsList = serverCart.items || [];
+                    const cartItemsList = (serverCart as any).items || serverCart || [];
 
                     const mappedItems: CartItem[] = cartItemsList.map((item: any) => ({
                         id: item.id.toString(), // Server ID is number
@@ -61,8 +62,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         grind: undefined
                     }));
                     setCartItems(mappedItems);
-                } catch (err) {
+                } catch (err: any) {
                     console.error("Failed to sync cart from server", err);
+                    toast.error(err.userMessage ?? 'Failed to load your cart. Please refresh.');
                 }
             } else {
                 // If guest, load from LocalStorage
@@ -123,10 +125,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (isAuthenticated) {
             try {
                 await cartService.addToCart(product.id, quantity);
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Failed to add to server cart, rolling back UI", err);
                 setCartItems(previousItems); // Rollback to the clean snapshot
-                alert("Failed to save to cloud cart. Your local cart has been restored.");
+                toast.error(err.userMessage ?? 'Failed to save item. Your cart has been restored.');
             }
         }
     };
