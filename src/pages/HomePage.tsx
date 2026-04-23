@@ -42,7 +42,9 @@ const HomePage = () => {
         setCategories(cats.slice(0, 3)); // Display top 3 categories
       } catch (error: any) {
         console.error("Failed to fetch homepage data", error);
-        toast.error(error.userMessage ?? 'Failed to load homepage content. Please refresh.');
+        toast.error(error.userMessage ?? 'Failed to load homepage content. Please refresh.', {
+          id: error.userMessage ?? 'homepage_error'
+        });
       } finally {
         setLoading(false);
       }

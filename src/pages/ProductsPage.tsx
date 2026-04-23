@@ -59,6 +59,34 @@ export default function ProductsPage() {
     fetchInitialData();
   }, []);
 
+  // Listen to URL parameters (for links coming from Footer / HomePage)
+  useEffect(() => {
+    if (categories.length === 0) return; // Wait until we have category DB mapping
+
+    const categoryIdParam = searchParams.get('categoryId');
+    const categoryNameParam = searchParams.get('category');
+
+    let targetId: number | undefined = undefined;
+
+    if (categoryIdParam) {
+      targetId = Number(categoryIdParam);
+    } else if (categoryNameParam) {
+      // Find the ID for the human-readable string (e.g. 'Coffee Beans')
+      const targetCat = categories.find(c => c.name.toLowerCase() === categoryNameParam.toLowerCase());
+      if (targetCat) targetId = targetCat.id;
+    }
+
+    if (targetId !== filters.categoryId) {
+      setSearchInput('');
+      updateFilters({
+        categoryId: targetId,
+        subcategoryId: undefined,
+        page: 1,
+        ...resetAdvancedFilters()
+      });
+    }
+  }, [searchParams, categories]);
+
   // 2. Fetch Products when filters change
   useEffect(() => {
     fetchProducts();
