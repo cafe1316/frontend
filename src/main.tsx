@@ -23,8 +23,7 @@ import { AuthProvider } from "./components/AuthContext";
 import { CartProvider } from "./components/CartContext";
 import AboutPage from "./pages/AboutPage";
 import ErrorBoundary from "./components/ErrorBoundary";
-
-
+import ScrollToTop from "./components/ScrollToTop";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -36,6 +35,7 @@ createRoot(document.getElementById("root")!).render(
       <AuthProvider>
         <CartProvider>
           <BrowserRouter>
+            <ScrollToTop />
             <Routes>
               <Route element={<Layout />}>
                 <Route path="/" element={<Home />} />

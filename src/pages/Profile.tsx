@@ -44,9 +44,9 @@ const Profile = () => {
                             <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                                 <div className="flex justify-between items-center mb-6">
                                     <h2 className="text-xl font-bold">Personal Information</h2>
-                                    <Link to="/setting" className="text-red-500 hover:text-red-600">
+                                    <button onClick={() => toast('Profile editing coming soon!', { icon: '🚧' })} className="text-red-500 hover:text-red-600">
                                         <i className="fas fa-edit mr-1"></i> Edit
-                                    </Link>
+                                    </button>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -135,10 +135,10 @@ const Profile = () => {
                                                         <td className="py-3 px-4">
                                                             <Link to={`/order/${order.id}`} className="text-red-500 hover:text-red-600 mr-3">Details</Link>
                                                             {order.status === 'Completed' && (
-                                                                <button className="text-gray-500 hover:text-gray-600">Buy Again</button>
+                                                                <button onClick={() => toast('Reordering coming soon!')} className="text-gray-500 hover:text-gray-600">Buy Again</button>
                                                             )}
                                                             {order.status === 'Shipped' && (
-                                                                <button className="text-gray-500 hover:text-gray-600">Track</button>
+                                                                <button onClick={() => toast('Live tracking coming soon!', { icon: '🚚' })} className="text-gray-500 hover:text-gray-600">Track</button>
                                                             )}
                                                         </td>
                                                     </tr>
@@ -153,7 +153,10 @@ const Profile = () => {
                             <div className="bg-white rounded-xl shadow-sm p-6">
                                 <div className="flex justify-between items-center mb-6">
                                     <h2 className="text-xl font-bold">Shipping Address</h2>
-                                    <button className="text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded">
+                                    <button
+                                        onClick={() => toast('Address Book management coming soon!', { icon: '📍' })}
+                                        className="text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded"
+                                    >
                                         <i className="fas fa-plus mr-1"></i> Add New Address
                                     </button>
                                 </div>
@@ -161,10 +164,10 @@ const Profile = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="border rounded-lg p-4 relative">
                                         <div className="absolute top-3 right-3 flex space-x-2">
-                                            <button className="text-gray-500 hover:text-red-500">
+                                            <button onClick={() => toast('Address Book management coming soon!')} className="text-gray-500 hover:text-red-500">
                                                 <i className="fas fa-edit"></i>
                                             </button>
-                                            <button className="text-gray-500 hover:text-red-500">
+                                            <button onClick={() => toast('Address Book management coming soon!')} className="text-gray-500 hover:text-red-500">
                                                 <i className="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -178,10 +181,10 @@ const Profile = () => {
 
                                     <div className="border rounded-lg p-4 relative">
                                         <div className="absolute top-3 right-3 flex space-x-2">
-                                            <button className="text-gray-500 hover:text-red-500">
+                                            <button onClick={() => toast('Address Book management coming soon!')} className="text-gray-500 hover:text-red-500">
                                                 <i className="fas fa-edit"></i>
                                             </button>
-                                            <button className="text-gray-500 hover:text-red-500">
+                                            <button onClick={() => toast('Address Book management coming soon!')} className="text-gray-500 hover:text-red-500">
                                                 <i className="fas fa-trash"></i>
                                             </button>
                                         </div>

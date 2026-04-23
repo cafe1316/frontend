@@ -72,7 +72,7 @@ axiosInstance.interceptors.response.use(
     // 500 & network failures: system-level, always notify user here
     if (error.response?.status === 500 || !error.response) {
       console.error('System error:', error.response?.data ?? error.message);
-      toast.error(error.userMessage);
+      toast.error(error.userMessage, { id: error.userMessage });
     }
 
     return Promise.reject(error);

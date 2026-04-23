@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useCart } from './CartContext'
 import { useAuth } from './AuthContext'
+import toast from 'react-hot-toast'
 
 
 
@@ -45,25 +46,24 @@ const AccountSideBar = () => {
                                 </Link>
                             </li>
                             <li className="py-2 px-3 rounded hover:bg-gray-50">
-                                <Link to="/wishlist" className="block text-gray-700 hover:text-red-500">
+                                <button onClick={() => toast('Wishlist feature coming soon!', { icon: '❤️' })} className="w-full text-left block text-gray-700 hover:text-red-500">
                                     <i className="fas fa-heart mr-2"></i> Wishlist
-                                    <span className="bg-gray-200 text-gray-700 text-xs rounded-full px-2 py-0.5 ml-2">5</span>
-                                </Link>
+                                </button>
                             </li>
                             <li className="py-2 px-3 rounded hover:bg-gray-50">
-                                <Link to="/address" className="block text-gray-700 hover:text-red-500">
+                                <button onClick={() => toast('Address management coming soon!', { icon: '📍' })} className="w-full text-left block text-gray-700 hover:text-red-500">
                                     <i className="fas fa-map-marker-alt mr-2"></i> Address
-                                </Link>
+                                </button>
                             </li>
                             <li className="py-2 px-3 rounded hover:bg-gray-50">
-                                <Link to="/paymethod" className="block text-gray-700 hover:text-red-500">
+                                <button onClick={() => toast('Payment methods coming soon!', { icon: '💳' })} className="w-full text-left block text-gray-700 hover:text-red-500">
                                     <i className="fas fa-credit-card mr-2"></i> Payment
-                                </Link>
+                                </button>
                             </li>
                             <li className="py-2 px-3 rounded hover:bg-gray-50">
-                                <Link to="/setting" className="block text-gray-700 hover:text-red-500">
+                                <button onClick={() => toast('Settings panel coming soon!', { icon: '⚙️' })} className="w-full text-left block text-gray-700 hover:text-red-500">
                                     <i className="fas fa-cog mr-2"></i> Settings
-                                </Link>
+                                </button>
                             </li>
                             <li className="py-2 px-3 rounded hover:bg-gray-50 border-t mt-2">
                                 <button
@@ -83,7 +83,7 @@ const AccountSideBar = () => {
                 <div className="bg-white rounded-xl shadow-sm p-6">
                     <h3 className="font-bold mb-4">Need Help?</h3>
                     <p className="text-sm text-gray-600 mb-4">If you have any questions about your order, please contact our support team.</p>
-                    <button className="w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition">
+                    <button onClick={() => toast('Support portal coming soon! Email us at support@cafe1316.com', { icon: '🎧' })} className="w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition">
                         Contact Support
                     </button>
                 </div>
