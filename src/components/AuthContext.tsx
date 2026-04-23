@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         dispatch({ type: "LOGIN", payload: { token, user } });
       }
     } catch (error: any) {
-      console.error("獲取用戶資料失敗", error);
+      console.error("Failed to fetch user profile", error);
       // 如果後端說 Token 沒用了 (404/401)，自動登出
       if (error.response?.status === 404) {
         localStorage.removeItem("token");
@@ -130,13 +130,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // 當 Login.tsx 組件成功拿到後端返回的 JWT 後，調用這個函數
+  // When the Login.tsx component successfully receives the JWT from the backend, call this function
   const login = (token: string, user: UserDto) => {
-    // 1. 存入瀏覽器保險箱
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
+    try {
+      // 1. Save to browser safe box
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+    } catch (e: any) {
+      console.error("Failed to write to localStorage. This may be due to privacy settings (e.g. Safari ITP) or storage quota exceeded.", e);
+    }
 
-    // 2. 廣播告訴全站：我們登錄啦！
+    // 2. Broadcast to the whole site: We are logged in!
     dispatch({
       type: "LOGIN",
       payload: { token, user },

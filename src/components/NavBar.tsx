@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { useCart } from "./CartContext";
+import toast from "react-hot-toast";
 
 
 const CustomerLink = ({
@@ -80,9 +81,12 @@ const NavBar: React.FC = () => {
           </Link>
 
           {/* Wishlist */}
-          <CustomerLink to={isAuthenticated ? "/wishlist" : "/login"} className="text-black hover:text-red-500 transition">
+          <button
+            onClick={() => toast('Wishlist feature coming soon!', { icon: '❤️' })}
+            className="text-black hover:text-red-500 transition cursor-pointer"
+          >
             <i className="fas fa-heart"></i>
-          </CustomerLink>
+          </button>
 
           {/* Profile */}
           <CustomerLink to={isAuthenticated ? "/profile" : "/login"} className="text-black hover:text-red-500 transition">

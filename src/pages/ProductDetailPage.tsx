@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { productService } from "../api/services/productService";
 import { ProductDetailDto } from "../api/types/product";
 import { useCart } from "../components/CartContext";
+import toast from 'react-hot-toast';
 
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -177,7 +178,7 @@ const ProductDetailPage = () => {
                   disabled={product.stockStatus === 'OutOfStock'}
                   onClick={() => {
                     addToCart(product, quantity);
-                    alert(`Added ${quantity} x ${product.name} to cart!`);
+                    toast.success(`Added ${quantity} × ${product.name} to cart!`);
                   }}
                   className={`flex-1 py-3 px-6 rounded-full flex items-center justify-center transition font-semibold ${product.stockStatus === 'OutOfStock' ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'bg-red-500 text-white hover:bg-red-600'}`}
                 >

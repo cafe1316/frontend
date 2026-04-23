@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { orderService } from "../api/services/orderService";
 import { OrderDto } from "../api/types/index";
+import toast from 'react-hot-toast';
 
 const OrderComplete = () => {
     const [order, setOrder] = useState<OrderDto | null>(null);
@@ -28,8 +29,9 @@ const OrderComplete = () => {
                         setLoading(false);
                     }
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Failed to fetch order", error);
+                toast.error(error.userMessage ?? 'Failed to verify order. Please check My Orders.');
                 setLoading(false);
             }
         };

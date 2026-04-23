@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import axios from "axios";
 import { auth, provider } from "../lib/firebase";
 import { useAuth } from "../components/AuthContext";
+import { authService } from "../api/services/authService";
 
 const LoginPage = () => {
   // 状态管理
@@ -27,7 +27,7 @@ const LoginPage = () => {
     // 1. 检查 Firebase 是否初始化成功
     if (!auth || !provider) {
       console.error("Firebase not initialized. Check environment variables.");
-      setError("Firebase 配置缺失，请检查环境变量"); // Simplified for now
+      setError("Firebase configuration missing. Please check environment variables.");
       setIsLoading(false);
       return;
     }
@@ -48,34 +48,22 @@ const LoginPage = () => {
         const credential = GoogleAuthProvider.credentialFromResult(result);
         const googleIdToken = credential?.idToken;
 
-        console.log("Google Login successful.");
-
         if (!googleIdToken) {
           throw new Error("Failed to retrieve Google ID Token from login result.");
         }
 
-        console.log("Got Google ID Token, exchanging with backend...");
-
-        // 3. 将 Google ID Token 发送给后端进行验证，换取我们自己的 JWT
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5255/api';
-
         try {
-          const response = await axios.post(`${API_BASE_URL}/Auth/google`, {
-            IdToken: googleIdToken
-          });
+          // Use authService (axiosInstance) for consistent service-layer architecture
+          const { token: backendToken, user } = await authService.loginWithGoogle(googleIdToken);
 
-          const { token: backendToken, user } = response.data;
-          console.log("Backend login successful", user);
-
-          // 4. 使用后端返回的 JWT 登录
+          // Save the backend JWT and update global auth state
           login(backendToken, user);
           navigate("/", { replace: true });
 
         } catch (backendError: any) {
           console.error("Backend validation failed", backendError);
-          // 打印更多后端错误细节
-          const errorMsg = backendError.response?.data?.message || backendError.response?.data || backendError.message;
-          setError(`Login failed: Backend rejected the token. (${backendError.response?.status}) - ${JSON.stringify(errorMsg)}`);
+          setError(backendError.userMessage ?? "Login failed. Please try again.");
+          return; // Prevent fall-through to navigate() below
         }
       }
     } catch (err: any) {

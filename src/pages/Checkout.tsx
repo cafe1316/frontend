@@ -5,6 +5,7 @@ import { paymentService } from '../api/services/paymentService';
 import { OrderAddressDto } from '../api/types/index';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import toast from 'react-hot-toast';
 
 // --- Stripe Payment Form Component ---
 const StripePaymentForm = ({ checkoutIntentId, amount }: { checkoutIntentId: string, amount: number }) => {
@@ -103,10 +104,8 @@ const Checkout = () => {
 
     const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        console.log(`Input change: ${name} = ${value}`);
         setAddress(prev => {
             const newState = { ...prev, [name]: value };
-            console.log("New address state:", newState);
             return newState;
         });
     };
@@ -128,7 +127,8 @@ const Checkout = () => {
             // 3. Move to Payment Step
             setStep(2);
         } catch (error: any) {
-            alert("Failed to initialize checkout: " + (error.response?.data?.message || error.message));
+            console.error('Checkout intent failed', error);
+            toast.error(error.userMessage ?? 'Failed to initialize checkout. Please try again.');
         }
     };
 

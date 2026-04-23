@@ -4,6 +4,7 @@ import AccountSideBar from '../components/AccountSideBar'
 import { useAuth } from '../components/AuthContext'
 import { orderService } from '../api/services/orderService'
 import { OrderDto } from '../api/types/index'
+import toast from 'react-hot-toast'
 
 const Profile = () => {
     const { user } = useAuth();
@@ -16,8 +17,9 @@ const Profile = () => {
                 // Fetch first page, 3 items for preview
                 const result = await orderService.getUserOrders(1, 3);
                 setOrders(result.items);
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Failed to fetch recent orders", error);
+                toast.error(error.userMessage ?? 'Failed to load recent orders.');
             } finally {
                 setLoading(false);
             }
