@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth, provider } from "../lib/firebase";
 import { useAuth } from "../components/AuthContext";
@@ -10,14 +10,16 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<String | null>(null); // 新增错误状态
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || "/";
   const { login, isAuthenticated } = useAuth();
 
-  // Best Practice: 如果用户已经登录 (有 token)，访问登录页应自动跳转到首页
+  // Best Practice: 如果用户已经登录 (有 token)，访问登录页应自动跳转到刚才想去的页面
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/", { replace: true }); // replace: true 防止用户点后退键又回到登录页
+      navigate(from, { replace: true }); // replace: true 防止用户点后退键又回到登录页
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, from]);
 
   // 处理 Google 登录点击
   const handleGoogleLogin = async () => {
@@ -58,7 +60,7 @@ const LoginPage = () => {
 
           // Save the backend JWT and update global auth state
           login(backendToken, user);
-          navigate("/", { replace: true });
+          navigate(from, { replace: true });
 
         } catch (backendError: any) {
           console.error("Backend validation failed", backendError);
