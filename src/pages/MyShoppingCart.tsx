@@ -1,8 +1,12 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../components/CartContext';
+import { useAuth } from '../components/AuthContext';
+import toast from 'react-hot-toast';
 
 const MyShoppingCart = () => {
     const { cartItems, updateQuantity, removeFromCart, cartTotal } = useCart();
+    const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
 
     if (cartItems.length === 0) {
         return (
@@ -114,26 +118,42 @@ const MyShoppingCart = () => {
                             <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
                                 <h2 className="text-lg font-bold mb-4">Order Summary</h2>
 
-                                <div className="border-b pb-4 mb-4">
-                                    <div className="flex justify-between mb-2">
+                                <div className="border-b pb-4 mb-4 space-y-2">
+                                    <div className="flex justify-between">
                                         <span className="text-gray-600">Subtotal</span>
                                         <span>${cartTotal.toFixed(2)}</span>
                                     </div>
-                                    <div className="flex justify-between mb-2">
-                                        <span className="text-gray-600">Shipping</span>
-                                        <span className="text-green-500">Free</span>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">Shipping (Flat Rate)</span>
+                                        <span>$10.00</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-500 mt-2">
+                                        <span>Tax (Est. 10%)</span>
+                                        <span>${(cartTotal * 0.1).toFixed(2)}</span>
                                     </div>
                                 </div>
 
                                 <div className="flex justify-between font-bold mb-6">
                                     <span>Total</span>
-                                    <span className="text-red-500 text-xl">${cartTotal.toFixed(2)}</span>
+                                    <span className="text-red-500 text-xl">${(cartTotal + 10 + (cartTotal * 0.1)).toFixed(2)}</span>
                                 </div>
 
                                 <div className="space-y-3">
-                                    <Link to="/checkout" className="block w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition font-medium text-center">
-                                        Proceed to Checkout
-                                    </Link>
+                                    {isAuthenticated ? (
+                                        <Link to="/checkout" className="block w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition font-medium text-center">
+                                            Proceed to Checkout
+                                        </Link>
+                                    ) : (
+                                        <button
+                                            onClick={() => {
+                                                toast.error("Please login to proceed to checkout");
+                                                navigate("/login", { state: { from: "/checkout" } });
+                                            }}
+                                            className="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition font-medium text-center"
+                                        >
+                                            Proceed to Checkout
+                                        </button>
+                                    )}
                                     <Link to="/products" className="block w-full text-center text-gray-500 hover:text-gray-800 text-sm">
                                         Continue Shopping
                                     </Link>

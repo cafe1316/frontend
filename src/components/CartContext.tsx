@@ -36,6 +36,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { isAuthenticated } = useAuth();
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false); // Fixes race condition on hard reloads
 
     // 1. Initial Load: LocalStorage OR Backend
     useEffect(() => {
@@ -43,6 +44,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // If logged in, fetch from API
             if (isAuthenticated) {
                 try {
+                    // --- GUEST CART MERGE LOGIC ---
+                    const savedCart = localStorage.getItem("shopping-cart");
+                    if (savedCart) {
+                        try {
+                            const guestItems: CartItem[] = JSON.parse(savedCart);
+                            if (guestItems.length > 0) {
+                                // Push all guest items to the server
+                                await Promise.all(
+                                    guestItems.map(item => cartService.addToCart(item.productId, item.quantity))
+                                );
+                                // Clear local storage after successful merge
+                                localStorage.removeItem("shopping-cart");
+                                toast.success("We've saved your offline cart items to your account!");
+                            }
+                        } catch (e) {
+                            console.error("Failed to merge guest cart", e);
+                        }
+                    }
+                    // ------------------------------
+
                     const serverCart = await cartService.getMyCart();
 
                     // The API returns { items: [], totalItems: 0, ... }
@@ -65,6 +86,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 } catch (err: any) {
                     console.error("Failed to sync cart from server", err);
                     toast.error(err.userMessage ?? 'Failed to load your cart. Please refresh.');
+                } finally {
+                    setIsLoaded(true);
                 }
             } else {
                 // If guest, load from LocalStorage
@@ -76,6 +99,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         console.error("Failed to parse local cart", e);
                     }
                 }
+                setIsLoaded(true);
             }
         };
         loadCart();
@@ -83,10 +107,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // 2. Persist to LocalStorage (for guests or backup)
     useEffect(() => {
-        if (!isAuthenticated) {
+        // Prevent overwriting with [] during initial hydration race conditions
+        if (isLoaded && !isAuthenticated) {
             localStorage.setItem("shopping-cart", JSON.stringify(cartItems));
         }
-    }, [cartItems, isAuthenticated]);
+    }, [cartItems, isAuthenticated, isLoaded]);
 
     const addToCart = async (product: any, quantity: number, options?: { size?: string; grind?: string }) => {
         // Snapshot the current state BEFORE any modifications
