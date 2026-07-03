@@ -52,9 +52,10 @@ const HomePage = () => {
     fetchData();
   }, []);
 
-  const handleAddToCart = (e: React.MouseEvent, product: ProductListDto) => {
+  const handleAddToCart = async (e: React.MouseEvent, product: ProductListDto) => {
     e.preventDefault(); // Prevent navigation
-    addToCart(product, 1);
+    const success = await addToCart(product, 1);
+    if (success) toast.success(`Added ${product.name} to cart!`);
   };
 
   return (

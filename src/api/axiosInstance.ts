@@ -1,5 +1,12 @@
-import axios from 'axios';
+import axios, { type AxiosError } from 'axios';
 import toast from 'react-hot-toast';
+
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    suppressGlobalToast?: boolean;
+    skipAuthRedirect?: boolean;
+  }
+}
 
 // 从环境变量读取 API 基础 URL，默认使用本地开发服务器
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5255/api';
@@ -7,7 +14,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5255
 // ─── Error Translation Layer ───────────────────────────────────────────────
 // Single Source of Truth: HTTP status code → user-friendly message mapping.
 // Pages read error.userMessage instead of touching error.response directly.
-function translateError(error: any): string {
+function translateError(error: AxiosError): string {
   // No response at all → pure network failure (offline, CORS, DNS)
   if (!error.response) {
     if (error.code === 'ECONNABORTED') return 'Request timed out. Please check your connection.';
@@ -20,7 +27,7 @@ function translateError(error: any): string {
   //   403 (ForbiddenException), 404 (NotFoundException), 500 (unhandled default).
   // 502/503/504 are platform-level (Render/Nginx during deploys) — real but not from app code.
   const messages: Record<number, string> = {
-    400: 'Invalid request. Please check your input.',
+    400: "We couldn't process that request. Please check the details and try again.",
     403: "You don't have permission to perform this action.",
     404: 'The requested resource was not found.',
     500: 'A server error occurred. Please try again later.',
@@ -61,7 +68,7 @@ axiosInstance.interceptors.response.use(
     error.userMessage = translateError(error);
 
     // 401: token expired → global logout (axiosInstance owns this, not pages)
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !error.config?.skipAuthRedirect) {
       console.warn('Token expired or invalid, redirecting to login...');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -70,7 +77,8 @@ axiosInstance.interceptors.response.use(
     }
 
     // 500 & network failures: system-level, always notify user here
-    if (error.response?.status === 500 || !error.response) {
+    const suppressGlobalToast = error.config?.suppressGlobalToast;
+    if (!suppressGlobalToast && (error.response?.status === 500 || !error.response)) {
       console.error('System error:', error.response?.data ?? error.message);
       toast.error(error.userMessage, { id: error.userMessage });
     }

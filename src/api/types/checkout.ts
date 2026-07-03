@@ -19,4 +19,9 @@ export interface CheckoutResponseDto {
     clientSecret: string;
     publishableKey: string;
     checkoutIntentId: string;
+    subtotalCents: number;
+    shippingFeeCents: number;
+    taxCents: number;
+    grandTotalCents: number;
+    currency: string;
 }

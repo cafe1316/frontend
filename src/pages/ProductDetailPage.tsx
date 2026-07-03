@@ -27,7 +27,7 @@ const ProductDetailPage = () => {
           setSelectedImage(data.imageUrls[0]);
         }
       } catch (err) {
-        setError("Failed to load product details.");
+        setError("We couldn't load this product. Please try again.");
         console.error(err);
       } finally {
         setLoading(false);
@@ -176,9 +176,9 @@ const ProductDetailPage = () => {
               <div className="flex space-x-4 mb-8">
                 <button
                   disabled={product.stockStatus === 'OutOfStock'}
-                  onClick={() => {
-                    addToCart(product, quantity);
-                    toast.success(`Added ${quantity} × ${product.name} to cart!`);
+                  onClick={async () => {
+                    const success = await addToCart(product, quantity);
+                    if (success) toast.success(`Added ${quantity} × ${product.name} to cart!`);
                   }}
                   className={`flex-1 py-3 px-6 rounded-full flex items-center justify-center transition font-semibold ${product.stockStatus === 'OutOfStock' ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'bg-red-500 text-white hover:bg-red-600'}`}
                 >
