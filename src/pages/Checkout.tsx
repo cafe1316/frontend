@@ -14,7 +14,6 @@ const StripePaymentForm = ({ checkoutIntentId, amount }: { checkoutIntentId: str
     const [message, setMessage] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const navigate = useNavigate();
-    const { clearCart } = useCart();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -35,14 +34,12 @@ const StripePaymentForm = ({ checkoutIntentId, amount }: { checkoutIntentId: str
         });
 
         if (error) {
-            setMessage(error.message || "An unexpected error occurred.");
+            console.error("Stripe payment failed", error);
+            setMessage("Payment could not be completed. Please check your card details or try another payment method.");
             setIsProcessing(false);
         } else if (paymentIntent && paymentIntent.status === "succeeded") {
-            // Success!
-            // Check webhook ensures backend processes it, but we can clear cart optimistically 
-            // or wait for verification.
-            // Ideally we redirect to a success page.
-            clearCart();
+            // The Stripe webhook creates the order and clears the server cart only after
+            // persistence succeeds. The browser must not clear it independently.
             navigate("/ordercomplete", { state: { orderId: checkoutIntentId } }); // We might not have real Order ID yet until webhook processes
         } else {
             setMessage("Payment status: " + paymentIntent?.status);
@@ -101,6 +98,12 @@ const Checkout = () => {
     const [stripePromise, setStripePromise] = useState<any>(null);
     const [clientSecret, setClientSecret] = useState<string>("");
     const [checkoutIntentId, setCheckoutIntentId] = useState<string>("");
+    const [checkoutAmounts, setCheckoutAmounts] = useState<{
+        subtotal: number;
+        shippingFee: number;
+        tax: number;
+        grandTotal: number;
+    } | null>(null);
 
     const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -123,6 +126,12 @@ const Checkout = () => {
             setClientSecret(data.clientSecret);
             setStripePromise(loadStripe(data.publishableKey));
             setCheckoutIntentId(data.checkoutIntentId);
+            setCheckoutAmounts({
+                subtotal: data.subtotalCents / 100,
+                shippingFee: data.shippingFeeCents / 100,
+                tax: data.taxCents / 100,
+                grandTotal: data.grandTotalCents / 100,
+            });
 
             // 3. Move to Payment Step
             setStep(2);
@@ -140,6 +149,12 @@ const Checkout = () => {
             </div>
         )
     }
+
+    const displayedSubtotal = checkoutAmounts?.subtotal ?? cartTotal;
+    const displayedShipping = checkoutAmounts?.shippingFee ?? 10;
+    const displayedTax = checkoutAmounts?.tax ?? cartTotal * 0.1;
+    const displayedGrandTotal = checkoutAmounts?.grandTotal
+        ?? displayedSubtotal + displayedShipping + displayedTax;
 
     return (
         <>
@@ -274,7 +289,7 @@ const Checkout = () => {
                                     </h2>
                                     <div className="bg-white border rounded-xl p-6 shadow-sm">
                                         <Elements stripe={stripePromise} options={{ clientSecret }}>
-                                            <StripePaymentForm checkoutIntentId={checkoutIntentId} amount={cartTotal} />
+                                            <StripePaymentForm checkoutIntentId={checkoutIntentId} amount={displayedGrandTotal} />
                                         </Elements>
 
                                         <button onClick={() => setStep(1)} className="mt-4 text-sm text-gray-500 hover:text-gray-800 underline">
@@ -313,19 +328,19 @@ const Checkout = () => {
                                 <div className="space-y-2 mb-6">
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Subtotal</span>
-                                        <span>${cartTotal.toFixed(2)}</span>
+                                        <span>${displayedSubtotal.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Shipping (Flat Rate)</span>
-                                        <span>$10.00</span>
+                                        <span>${displayedShipping.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-xs text-gray-500">
                                         <span>Tax (Est. 10%)</span>
-                                        <span>${(cartTotal * 0.1).toFixed(2)}</span>
+                                        <span>${displayedTax.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between font-medium text-lg pt-2 border-t mt-2">
                                         <span>Total</span>
-                                        <span className="text-red-500">${(cartTotal + 10 + (cartTotal * 0.1)).toFixed(2)}</span>
+                                        <span className="text-red-500">${displayedGrandTotal.toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>

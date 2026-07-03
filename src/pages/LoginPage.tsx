@@ -29,7 +29,7 @@ const LoginPage = () => {
     // 1. 检查 Firebase 是否初始化成功
     if (!auth || !provider) {
       console.error("Firebase not initialized. Check environment variables.");
-      setError("Firebase configuration missing. Please check environment variables.");
+      setError("Google sign-in is temporarily unavailable. Please try again later.");
       setIsLoading(false);
       return;
     }
@@ -64,7 +64,7 @@ const LoginPage = () => {
 
         } catch (backendError: any) {
           console.error("Backend validation failed", backendError);
-          setError(backendError.userMessage ?? "Login failed. Please try again.");
+          setError("We couldn't complete Google sign-in. Please try again.");
           return; // Prevent fall-through to navigate() below
         }
       }
@@ -75,7 +75,7 @@ const LoginPage = () => {
       if (err.code === 'auth/popup-closed-by-user') {
         setError("Login cancelled");
       } else if (err.code === 'auth/invalid-credential') {
-        setError("Configuration Error: Please check Google Cloud Console OAuth settings.");
+        setError("Google sign-in is temporarily unavailable. Please try again later.");
       } else {
         setError("Google Login failed. Please try again.");
       }

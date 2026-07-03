@@ -43,7 +43,7 @@ const OrderComplete = () => {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen">
                 <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-600">Verifying payment with backend...</p>
+                <p className="text-gray-600">Confirming your payment...</p>
                 <p className="text-xs text-gray-400 mt-2">This may take a few seconds.</p>
             </div>
         );
@@ -59,9 +59,9 @@ const OrderComplete = () => {
                 </div>
                 <h1 className="text-2xl font-bold mb-4">Payment Processing...</h1>
                 <p className="text-gray-600 mb-8">
-                    We have received your payment, but the order hasn't been created in our system yet.
+                    We have received your payment, but your order is still being confirmed.
                     <br />
-                    <strong>Please ensure the Stripe Webhook is running locally!</strong>
+                    <strong>Please check My Orders in a few minutes.</strong>
                 </p>
                 <Link to="/" className="text-red-500 underline">Return Home</Link>
             </div>

@@ -16,7 +16,7 @@ const OrderDetail = () => {
                 const data = await orderService.getOrderById(Number(id));
                 setOrder(data);
             } catch (err) {
-                setError('Failed to load order details.');
+                setError("We couldn't load this order. Please try again.");
                 console.error(err);
             } finally {
                 setLoading(false);

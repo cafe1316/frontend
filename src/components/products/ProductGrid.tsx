@@ -54,9 +54,9 @@ export default function ProductGrid({ products, loading }: ProductGridProps) {
                     <div className="flex justify-between items-center mt-2">
                         <span className="font-bold text-lg">{product.currency === 'AUD' ? '$' : '¥'}{product.price}</span>
                         <button
-                            onClick={() => {
-                                addToCart(product, 1);
-                                toast.success(`Added ${product.name} to cart!`);
+                            onClick={async () => {
+                                const success = await addToCart(product, 1);
+                                if (success) toast.success(`Added ${product.name} to cart!`);
                             }}
                             className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition z-10 relative"
                         >

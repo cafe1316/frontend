@@ -33,6 +33,19 @@ export interface CartItemDto {
     addedAt: string;      // DateTime in C#, ISO string in TS
 }
 
+
+/**
+ * 购物车汇总 DTO
+ * 对应后端：Cafe1316.Application.DTOs.CartDto
+ * 用于：GET /api/cart
+ */
+export interface CartDto {
+    items: CartItemDto[];
+    totalItems: number;
+    totalAmount: number;
+    currency: string;
+}
+
 /**
  * 添加到购物车请求 DTO
  * 对应后端：Cafe1316.Application.DTOs.AddToCartDto
@@ -48,4 +61,18 @@ export interface AddToCartDto {
  */
 export interface UpdateCartItemDto {
     quantity: number;
+}
+
+export interface RejectedCartItemDto {
+    productId: number;
+    productName?: string | null;
+    requestedQuantity: number;
+    availableQuantity?: number | null;
+    reason: 'InvalidQuantity' | 'Unavailable' | 'OutOfStock' | 'InsufficientStock';
+    message: string;
+}
+
+export interface MergeCartResultDto {
+    cart: CartDto;
+    rejectedItems: RejectedCartItemDto[];
 }

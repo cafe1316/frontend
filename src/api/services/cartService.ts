@@ -1,5 +1,5 @@
 import axiosInstance from '../axiosInstance';
-import { CartItemDto, AddToCartDto, UpdateCartItemDto } from '../types/cart';
+import { CartDto, CartItemDto, AddToCartDto, MergeCartResultDto, UpdateCartItemDto } from '../types/cart';
 
 /**
  * Cart API Service
@@ -10,8 +10,8 @@ export const cartService = {
      * 获取当前用户的购物车
      * GET /api/cart
      */
-    getMyCart: async (): Promise<CartItemDto[]> => {
-        const response = await axiosInstance.get<CartItemDto[]>('/cart');
+    getMyCart: async (): Promise<CartDto> => {
+        const response = await axiosInstance.get<CartDto>('/cart');
         return response.data;
     },
 
@@ -24,6 +24,15 @@ export const cartService = {
             productId,
             quantity,
         } as AddToCartDto);
+        return response.data;
+    },
+
+    /**
+     * Merge valid guest items and report rejected items after login.
+     * POST /api/cart/merge
+     */
+    mergeGuestCart: async (items: AddToCartDto[]): Promise<MergeCartResultDto> => {
+        const response = await axiosInstance.post<MergeCartResultDto>('/cart/merge', { items });
         return response.data;
     },
 

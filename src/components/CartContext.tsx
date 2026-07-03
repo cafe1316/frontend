@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { cartService } from "../api/services/cartService";
+import { CartDto, CartItemDto } from "../api/types/cart";
 import toast from 'react-hot-toast';
 
 // Cart Item Interface
 export interface CartItem {
-    id: string; // Unique ID (product.id + variant options)
+    id: string; // Guest: product/options composite ID. Logged-in: server CartItem ID.
     productId: number;
     name: string;
     price: number;
@@ -22,15 +23,42 @@ interface CartContextType {
     cartItems: CartItem[];
     cartCount: number;
     cartTotal: number;
-    addToCart: (product: any, quantity: number, options?: { size?: string; grind?: string }) => void;
-    removeFromCart: (itemId: string) => void;
-    updateQuantity: (itemId: string, newQuantity: number) => void;
-    clearCart: () => void;
+    addToCart: (product: any, quantity: number, options?: { size?: string; grind?: string }) => Promise<boolean>;
+    removeFromCart: (itemId: string) => Promise<boolean>;
+    updateQuantity: (itemId: string, newQuantity: number) => Promise<boolean>;
+    clearCart: () => Promise<boolean>;
     isCartOpen: boolean;
     setIsCartOpen: (isOpen: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
+
+const mapServerCartItem = (item: CartItemDto): CartItem => ({
+    id: item.id.toString(),
+    productId: item.productId,
+    name: item.productName || "Unknown Product",
+    price: item.price,
+    currency: item.currency || "AUD",
+    mainImageUrl: item.mainImageUrl || "",
+    quantity: item.quantity,
+    // Backend doesn't support variants yet
+    size: undefined,
+    grind: undefined,
+});
+
+const mapServerCart = (cart: CartDto): CartItem[] => cart.items.map(mapServerCartItem);
+
+const createLocalCartItem = (product: any, quantity: number, options?: { size?: string; grind?: string }): CartItem => ({
+    id: `${product.id}-${options?.size || 'default'}-${options?.grind || 'default'}`,
+    productId: product.id,
+    name: product.name,
+    price: product.price,
+    currency: product.currency || 'AUD',
+    mainImageUrl: product.mainImageUrl || product.imageUrls?.[0] || '',
+    quantity,
+    size: options?.size,
+    grind: options?.grind,
+});
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isAuthenticated } = useAuth();
@@ -41,6 +69,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 1. Initial Load: LocalStorage OR Backend
     useEffect(() => {
         const loadCart = async () => {
+            setIsLoaded(false);
+
             // If logged in, fetch from API
             if (isAuthenticated) {
                 try {
@@ -50,39 +80,41 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         try {
                             const guestItems: CartItem[] = JSON.parse(savedCart);
                             if (guestItems.length > 0) {
-                                // Push all guest items to the server
-                                await Promise.all(
-                                    guestItems.map(item => cartService.addToCart(item.productId, item.quantity))
+                                const mergeResult = await cartService.mergeGuestCart(
+                                    guestItems.map(item => ({
+                                        productId: item.productId,
+                                        quantity: item.quantity,
+                                    }))
                                 );
-                                // Clear local storage after successful merge
                                 localStorage.removeItem("shopping-cart");
-                                toast.success("We've saved your offline cart items to your account!");
+                                setCartItems(mapServerCart(mergeResult.cart));
+
+                                if (mergeResult.rejectedItems.length > 0) {
+                                    const guestNames = new Map(
+                                        guestItems.map(item => [item.productId, item.name])
+                                    );
+                                    const rejectedDetails = mergeResult.rejectedItems
+                                        .map(item => {
+                                            const name = item.productName || guestNames.get(item.productId) || `Product ${item.productId}`;
+                                            return `${name}: ${item.message}`;
+                                        })
+                                        .join(' ');
+
+                                    toast.error(`Some items were not added. ${rejectedDetails}`, { duration: 10000 });
+                                } else {
+                                    toast.success("We've saved your offline cart items to your account!");
+                                }
+                                return;
                             }
                         } catch (e) {
                             console.error("Failed to merge guest cart", e);
+                            toast.error("Some offline cart items could not be saved. Please review your cart.");
                         }
                     }
                     // ------------------------------
 
                     const serverCart = await cartService.getMyCart();
-
-                    // The API returns { items: [], totalItems: 0, ... }
-                    // We need to map serverCart.items
-                    const cartItemsList = (serverCart as any).items || serverCart || [];
-
-                    const mappedItems: CartItem[] = cartItemsList.map((item: any) => ({
-                        id: item.id.toString(), // Server ID is number
-                        productId: item.productId,
-                        name: item.productName || "Unknown Product",
-                        price: item.price,
-                        currency: item.currency || "AUD",
-                        mainImageUrl: item.mainImageUrl || "", // Use mainImageUrl
-                        quantity: item.quantity,
-                        // Backend doesn't support variants yet
-                        size: undefined,
-                        grind: undefined
-                    }));
-                    setCartItems(mappedItems);
+                    setCartItems(mapServerCart(serverCart));
                 } catch (err: any) {
                     console.error("Failed to sync cart from server", err);
                     toast.error(err.userMessage ?? 'Failed to load your cart. Please refresh.');
@@ -97,7 +129,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         setCartItems(JSON.parse(savedCart));
                     } catch (e) {
                         console.error("Failed to parse local cart", e);
+                        setCartItems([]);
                     }
+                } else {
+                    setCartItems([]);
                 }
                 setIsLoaded(true);
             }
@@ -105,7 +140,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loadCart();
     }, [isAuthenticated]);
 
-    // 2. Persist to LocalStorage (for guests or backup)
+    // 2. Persist to LocalStorage (for guests only)
     useEffect(() => {
         // Prevent overwriting with [] during initial hydration race conditions
         if (isLoaded && !isAuthenticated) {
@@ -113,84 +148,87 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, [cartItems, isAuthenticated, isLoaded]);
 
-    const addToCart = async (product: any, quantity: number, options?: { size?: string; grind?: string }) => {
-        // Snapshot the current state BEFORE any modifications
+    const rollbackCart = (previousItems: CartItem[], err: any, fallbackMessage: string) => {
+        console.error(fallbackMessage, err);
+        setCartItems(previousItems);
+        toast.error(err?.userMessage ?? fallbackMessage);
+    };
+
+    const addToCart = async (product: any, quantity: number, options?: { size?: string; grind?: string }): Promise<boolean> => {
         const previousItems = [...cartItems];
+        const optimisticItem = createLocalCartItem(product, quantity, options);
 
         // Optimistic Update
-        const uniqueId = `${product.id}-${options?.size || 'default'}-${options?.grind || 'default'}`;
-
-        let newItemAdded: CartItem | null = null;
-
         setCartItems((prevItems) => {
-            const existingItemIndex = prevItems.findIndex((item) => item.id === uniqueId || (isAuthenticated && item.productId === product.id));
+            const existingItemIndex = prevItems.findIndex((item) =>
+                item.id === optimisticItem.id || (isAuthenticated && item.productId === product.id)
+            );
 
             if (existingItemIndex > -1) {
                 const newItems = [...prevItems];
                 const existingItem = newItems[existingItemIndex];
                 newItems[existingItemIndex] = { ...existingItem, quantity: existingItem.quantity + quantity };
                 return newItems;
-            } else {
-                newItemAdded = {
-                    id: uniqueId,
-                    productId: product.id,
-                    name: product.name,
-                    price: product.price,
-                    currency: product.currency || 'AUD',
-                    mainImageUrl: product.mainImageUrl || product.imageUrls?.[0] || '',
-                    quantity: quantity,
-                    size: options?.size,
-                    grind: options?.grind
-                };
-                return [...prevItems, newItemAdded];
             }
+
+            return [...prevItems, optimisticItem];
         });
 
-        // Backend Sync
-        if (isAuthenticated) {
-            try {
-                await cartService.addToCart(product.id, quantity);
-            } catch (err: any) {
-                console.error("Failed to add to server cart, rolling back UI", err);
-                setCartItems(previousItems); // Rollback to the clean snapshot
-                toast.error(err.userMessage ?? 'Failed to save item. Your cart has been restored.');
-            }
+        if (!isAuthenticated) return true;
+
+        try {
+            const savedItem = await cartService.addToCart(product.id, quantity);
+            const serverItem = mapServerCartItem(savedItem);
+
+            setCartItems((prevItems) => {
+                const existingItemIndex = prevItems.findIndex((item) =>
+                    item.productId === serverItem.productId || item.id === optimisticItem.id
+                );
+
+                if (existingItemIndex > -1) {
+                    const newItems = [...prevItems];
+                    newItems[existingItemIndex] = serverItem;
+                    return newItems;
+                }
+
+                return [...prevItems, serverItem];
+            });
+
+            return true;
+        } catch (err: any) {
+            rollbackCart(previousItems, err, 'Failed to save item. Your cart has been restored.');
+            return false;
         }
     };
 
-    const removeFromCart = async (itemId: string) => {
-        // Find item to get its Server ID or Product ID
+    const removeFromCart = async (itemId: string): Promise<boolean> => {
+        const previousItems = [...cartItems];
         const itemToRemove = cartItems.find(i => i.id === itemId);
 
         setCartItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
 
-        if (isAuthenticated && itemToRemove) {
-            try {
-                // If itemId is the server ID (usually int), use it. 
-                // If it's our composite string (guest mode), we might need to find by product ID.
-                // Assuming backend remove takes a CartItemID.
-                // If we don't have the server CartItemID stored, this might be tricky.
-                // For now, let's assume specific removal might need exact CartItem ID from server.
-                // If the initial fetch populated correct IDs, we are good.
+        if (!isAuthenticated) return true;
 
-                // If the ID is a number string, it's likely a server ID.
-                if (!isNaN(Number(itemId))) {
-                    await cartService.removeFromCart(Number(itemId));
-                } else {
-                    // Fallback or skip if we can't map local string ID to server ID
-                    console.warn("Could not remove from server: ID is local string", itemId);
-                }
-            } catch (err) {
-                console.error("Failed to remove from server cart", err);
+        try {
+            if (!itemToRemove) return true;
+            if (isNaN(Number(itemId))) {
+                throw new Error("Cart item is not synced with the server yet.");
             }
+
+            await cartService.removeFromCart(Number(itemId));
+            return true;
+        } catch (err: any) {
+            rollbackCart(previousItems, err, 'Failed to remove item. Your cart has been restored.');
+            return false;
         }
     };
 
-    const updateQuantity = async (itemId: string, newQuantity: number) => {
+    const updateQuantity = async (itemId: string, newQuantity: number): Promise<boolean> => {
         if (newQuantity < 1) {
-            removeFromCart(itemId);
-            return;
+            return removeFromCart(itemId);
         }
+
+        const previousItems = [...cartItems];
 
         setCartItems((prevItems) =>
             prevItems.map((item) =>
@@ -198,25 +236,39 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             )
         );
 
-        if (isAuthenticated) {
-            if (!isNaN(Number(itemId))) {
-                try {
-                    await cartService.updateCartItem(Number(itemId), newQuantity);
-                } catch (err) {
-                    console.error("Failed to update cart on server", err);
-                }
+        if (!isAuthenticated) return true;
+
+        try {
+            if (isNaN(Number(itemId))) {
+                throw new Error("Cart item is not synced with the server yet.");
             }
+
+            const updatedItem = await cartService.updateCartItem(Number(itemId), newQuantity);
+            const serverItem = mapServerCartItem(updatedItem);
+
+            setCartItems((prevItems) =>
+                prevItems.map((item) => item.id === itemId ? serverItem : item)
+            );
+
+            return true;
+        } catch (err: any) {
+            rollbackCart(previousItems, err, 'Failed to update cart. Your cart has been restored.');
+            return false;
         }
     };
 
-    const clearCart = async () => {
+    const clearCart = async (): Promise<boolean> => {
+        const previousItems = [...cartItems];
         setCartItems([]);
-        if (isAuthenticated) {
-            try {
-                await cartService.clearCart();
-            } catch (err) {
-                console.error("Failed to clear server cart", err);
-            }
+
+        if (!isAuthenticated) return true;
+
+        try {
+            await cartService.clearCart();
+            return true;
+        } catch (err: any) {
+            rollbackCart(previousItems, err, 'Failed to clear cart. Your cart has been restored.');
+            return false;
         }
     };
 

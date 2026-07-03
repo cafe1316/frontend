@@ -11,9 +11,11 @@ export const authService = {
      * POST /api/auth/google
      */
     loginWithGoogle: async (idToken: string): Promise<AuthResponseDto> => {
-        const response = await axiosInstance.post<AuthResponseDto>('/auth/google', {
-            idToken,
-        } as GoogleLoginDto);
+        const response = await axiosInstance.post<AuthResponseDto>(
+            '/auth/google',
+            { idToken } as GoogleLoginDto,
+            { suppressGlobalToast: true, skipAuthRedirect: true }
+        );
         return response.data;
     },
 
