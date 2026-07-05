@@ -13,7 +13,7 @@ const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"details" | "specs" | "brewing">("details");
-  const { addToCart } = useCart();
+  const { addToCart, isMutating } = useCart();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -166,7 +166,8 @@ const ProductDetailPage = () => {
                     />
                     <button
                       onClick={() => setQuantity(quantity + 1)}
-                      className="px-4 py-2 text-gray-600 hover:text-red-500 transition"
+                      disabled={quantity >= 99}
+                      className="px-4 py-2 text-gray-600 hover:text-red-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >+</button>
                   </div>
                 </div>
@@ -175,12 +176,12 @@ const ProductDetailPage = () => {
               {/* Action Buttons */}
               <div className="flex space-x-4 mb-8">
                 <button
-                  disabled={product.stockStatus === 'OutOfStock'}
+                  disabled={product.stockStatus === 'OutOfStock' || isMutating}
                   onClick={async () => {
                     const success = await addToCart(product, quantity);
                     if (success) toast.success(`Added ${quantity} × ${product.name} to cart!`);
                   }}
-                  className={`flex-1 py-3 px-6 rounded-full flex items-center justify-center transition font-semibold ${product.stockStatus === 'OutOfStock' ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'bg-red-500 text-white hover:bg-red-600'}`}
+                  className={`flex-1 py-3 px-6 rounded-full flex items-center justify-center transition font-semibold ${(product.stockStatus === 'OutOfStock' || isMutating) ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'bg-red-500 text-white hover:bg-red-600'}`}
                 >
                   <i className="fas fa-shopping-cart mr-2"></i>
                   Add to Cart

@@ -28,7 +28,7 @@ const StripePaymentForm = ({ checkoutIntentId, amount }: { checkoutIntentId: str
                 // Return URL is required, but we can also handle redirect manually if needed.
                 // For this SPA, we might rely on the webhook or redirect to a completion page.
                 // Usually Stripe redirects. Let's set it to local completion page.
-                return_url: `${window.location.origin}/ordercomplete`,
+                return_url: `${window.location.origin}/ordercomplete?checkoutId=${encodeURIComponent(checkoutIntentId)}`,
             },
             redirect: "if_required" // Prevent auto redirect if we want to handle it
         });
@@ -38,9 +38,9 @@ const StripePaymentForm = ({ checkoutIntentId, amount }: { checkoutIntentId: str
             setMessage("Payment could not be completed. Please check your card details or try another payment method.");
             setIsProcessing(false);
         } else if (paymentIntent && paymentIntent.status === "succeeded") {
-            // The Stripe webhook creates the order and clears the server cart only after
-            // persistence succeeds. The browser must not clear it independently.
-            navigate("/ordercomplete", { state: { orderId: checkoutIntentId } }); // We might not have real Order ID yet until webhook processes
+            // The Stripe webhook creates the order and removes only the purchased cart
+            // quantities after persistence succeeds. The browser must not clear it independently.
+            navigate(`/ordercomplete?checkoutId=${encodeURIComponent(checkoutIntentId)}`);
         } else {
             setMessage("Payment status: " + paymentIntent?.status);
             setIsProcessing(false);
@@ -79,7 +79,7 @@ const StripePaymentForm = ({ checkoutIntentId, amount }: { checkoutIntentId: str
 
 
 const Checkout = () => {
-    const { cartItems, cartTotal } = useCart();
+    const { cartItems, cartTotal, hasUnavailableItems } = useCart();
     const [step, setStep] = useState<1 | 2>(1); // 1: Address, 2: Payment
 
     // Form State
@@ -95,7 +95,7 @@ const Checkout = () => {
     });
 
     // Stripe State
-    const [stripePromise, setStripePromise] = useState<any>(null);
+    const [stripePromise, setStripePromise] = useState<ReturnType<typeof loadStripe> | null>(null);
     const [clientSecret, setClientSecret] = useState<string>("");
     const [checkoutIntentId, setCheckoutIntentId] = useState<string>("");
     const [checkoutAmounts, setCheckoutAmounts] = useState<{
@@ -135,9 +135,10 @@ const Checkout = () => {
 
             // 3. Move to Payment Step
             setStep(2);
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const apiError = error as { userMessage?: string };
             console.error('Checkout intent failed', error);
-            toast.error(error.userMessage ?? 'Failed to initialize checkout. Please try again.');
+            toast.error(apiError.userMessage ?? 'Failed to initialize checkout. Please try again.');
         }
     };
 
@@ -148,6 +149,16 @@ const Checkout = () => {
                 <Link to="/products" className="text-red-500 underline">Go shopping</Link>
             </div>
         )
+    }
+
+    if (hasUnavailableItems) {
+        return (
+            <div className="p-10 text-center">
+                <h2 className="text-xl mb-3">Your cart needs attention</h2>
+                <p className="text-gray-600 mb-4">Remove or adjust unavailable items before continuing to payment.</p>
+                <Link to="/myshoppingcart" className="text-red-500 underline">Return to cart</Link>
+            </div>
+        );
     }
 
     const displayedSubtotal = checkoutAmounts?.subtotal ?? cartTotal;

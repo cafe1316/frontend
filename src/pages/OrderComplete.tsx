@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { orderService } from "../api/services/orderService";
 import { OrderDto } from "../api/types/index";
 import toast from 'react-hot-toast';
@@ -8,36 +8,45 @@ const OrderComplete = () => {
     const [order, setOrder] = useState<OrderDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [retryCount, setRetryCount] = useState(0);
+    const [searchParams] = useSearchParams();
+    const checkoutId = searchParams.get("checkoutId");
 
     // Get order info
     useEffect(() => {
-        const fetchLatestOrder = async () => {
-            try {
-                // Fetch the latest order
-                const result = await orderService.getUserOrders(1, 1);
-                if (result.items.length > 0) {
-                    const latestOrder = result.items[0];
-                    // Check if it's a recent paid order (e.g. created within last 5 mins)
-                    // For now just take the latest one
-                    setOrder(latestOrder);
-                    setLoading(false);
-                } else {
-                    // No order found yet, maybe webhook is slow
-                    if (retryCount < 10) {
-                        setTimeout(() => setRetryCount(c => c + 1), 2000);
-                    } else {
-                        setLoading(false);
-                    }
-                }
-            } catch (error: any) {
-                console.error("Failed to fetch order", error);
-                toast.error(error.userMessage ?? 'Failed to verify order. Please check My Orders.');
+        let retryTimer: ReturnType<typeof setTimeout> | undefined;
+
+        const fetchCheckoutOrder = async () => {
+            if (!checkoutId) {
                 setLoading(false);
+                return;
+            }
+
+            try {
+                const checkoutOrder = await orderService.getOrderByCheckoutId(checkoutId);
+                setOrder(checkoutOrder);
+                setLoading(false);
+            } catch (error: unknown) {
+                const apiError = error as {
+                    response?: { status?: number };
+                    userMessage?: string;
+                };
+                if (apiError.response?.status === 404 && retryCount < 10) {
+                    retryTimer = setTimeout(() => setRetryCount(count => count + 1), 2000);
+                } else {
+                    console.error("Failed to fetch checkout order", error);
+                    if (apiError.response?.status !== 404) {
+                        toast.error(apiError.userMessage ?? 'Failed to verify order. Please check My Orders.');
+                    }
+                    setLoading(false);
+                }
             }
         };
 
-        fetchLatestOrder();
-    }, [retryCount]);
+        fetchCheckoutOrder();
+        return () => {
+            if (retryTimer) clearTimeout(retryTimer);
+        };
+    }, [checkoutId, retryCount]);
 
     if (loading) {
         return (
