@@ -9,7 +9,7 @@ interface ProductGridProps {
 }
 
 export default function ProductGrid({ products, loading }: ProductGridProps) {
-    const { addToCart } = useCart();
+    const { addToCart, isMutating } = useCart();
 
     if (loading) {
         return <div className="col-span-full text-center py-20 text-gray-500">Loading products...</div>;
@@ -54,13 +54,15 @@ export default function ProductGrid({ products, loading }: ProductGridProps) {
                     <div className="flex justify-between items-center mt-2">
                         <span className="font-bold text-lg">{product.currency === 'AUD' ? '$' : '¥'}{product.price}</span>
                         <button
+                            disabled={product.stockStatus === 'OutOfStock' || isMutating}
                             onClick={async () => {
                                 const success = await addToCart(product, 1);
                                 if (success) toast.success(`Added ${product.name} to cart!`);
                             }}
-                            className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition z-10 relative"
+                            aria-label={product.stockStatus === 'OutOfStock' ? `${product.name} is out of stock` : `Add ${product.name} to cart`}
+                            className={`text-white p-2 rounded-full transition z-10 relative ${(product.stockStatus === 'OutOfStock' || isMutating) ? 'bg-gray-300 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'}`}
                         >
-                            <i className="fas fa-plus"></i>
+                            <i className={product.stockStatus === 'OutOfStock' ? 'fas fa-ban' : 'fas fa-plus'}></i>
                         </button>
                     </div>
                 </div>

@@ -1,8 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { useAuth } from "./AuthContext";
 import { cartService } from "../api/services/cartService";
 import { CartDto, CartItemDto } from "../api/types/cart";
 import toast from 'react-hot-toast';
+
+const MAX_QUANTITY_PER_PRODUCT = 99;
 
 // Cart Item Interface
 export interface CartItem {
@@ -17,18 +19,32 @@ export interface CartItem {
     size?: string;
     grind?: string;
     variantId?: number;
+    isAvailable: boolean;
+    availabilityMessage?: string;
+}
+
+interface CartProduct {
+    id: number;
+    name: string;
+    price: number;
+    currency?: string;
+    mainImageUrl?: string | null;
+    imageUrls?: string[];
+    stockStatus?: string;
 }
 
 interface CartContextType {
     cartItems: CartItem[];
     cartCount: number;
     cartTotal: number;
-    addToCart: (product: any, quantity: number, options?: { size?: string; grind?: string }) => Promise<boolean>;
+    addToCart: (product: CartProduct, quantity: number, options?: { size?: string; grind?: string }) => Promise<boolean>;
     removeFromCart: (itemId: string) => Promise<boolean>;
     updateQuantity: (itemId: string, newQuantity: number) => Promise<boolean>;
     clearCart: () => Promise<boolean>;
     isCartOpen: boolean;
     setIsCartOpen: (isOpen: boolean) => void;
+    isMutating: boolean;
+    hasUnavailableItems: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -44,11 +60,13 @@ const mapServerCartItem = (item: CartItemDto): CartItem => ({
     // Backend doesn't support variants yet
     size: undefined,
     grind: undefined,
+    isAvailable: item.isAvailable,
+    availabilityMessage: item.availabilityMessage ?? undefined,
 });
 
 const mapServerCart = (cart: CartDto): CartItem[] => cart.items.map(mapServerCartItem);
 
-const createLocalCartItem = (product: any, quantity: number, options?: { size?: string; grind?: string }): CartItem => ({
+const createLocalCartItem = (product: CartProduct, quantity: number, options?: { size?: string; grind?: string }): CartItem => ({
     id: `${product.id}-${options?.size || 'default'}-${options?.grind || 'default'}`,
     productId: product.id,
     name: product.name,
@@ -58,13 +76,25 @@ const createLocalCartItem = (product: any, quantity: number, options?: { size?: 
     quantity,
     size: options?.size,
     grind: options?.grind,
+    isAvailable: product.stockStatus !== 'OutOfStock',
+    availabilityMessage: product.stockStatus === 'OutOfStock' ? 'This product is out of stock.' : undefined,
 });
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+    if (typeof error === 'object' && error !== null && 'userMessage' in error) {
+        const message = (error as { userMessage?: unknown }).userMessage;
+        if (typeof message === 'string') return message;
+    }
+    return fallback;
+};
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isAuthenticated } = useAuth();
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false); // Fixes race condition on hard reloads
+    const [isMutating, setIsMutating] = useState(false);
+    const mutationInFlight = useRef(false);
 
     // 1. Initial Load: LocalStorage OR Backend
     useEffect(() => {
@@ -115,9 +145,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                     const serverCart = await cartService.getMyCart();
                     setCartItems(mapServerCart(serverCart));
-                } catch (err: any) {
+                } catch (err: unknown) {
                     console.error("Failed to sync cart from server", err);
-                    toast.error(err.userMessage ?? 'Failed to load your cart. Please refresh.');
+                    toast.error(getErrorMessage(err, 'Failed to load your cart. Please refresh.'));
                 } finally {
                     setIsLoaded(true);
                 }
@@ -148,13 +178,42 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, [cartItems, isAuthenticated, isLoaded]);
 
-    const rollbackCart = (previousItems: CartItem[], err: any, fallbackMessage: string) => {
-        console.error(fallbackMessage, err);
-        setCartItems(previousItems);
-        toast.error(err?.userMessage ?? fallbackMessage);
+    const beginServerMutation = (): boolean => {
+        if (mutationInFlight.current) return false;
+        mutationInFlight.current = true;
+        setIsMutating(true);
+        return true;
     };
 
-    const addToCart = async (product: any, quantity: number, options?: { size?: string; grind?: string }): Promise<boolean> => {
+    const endServerMutation = () => {
+        mutationInFlight.current = false;
+        setIsMutating(false);
+    };
+
+    const recoverServerCart = async (previousItems: CartItem[], err: unknown, fallbackMessage: string) => {
+        console.error(fallbackMessage, err);
+        try {
+            const serverCart = await cartService.getMyCart();
+            setCartItems(mapServerCart(serverCart));
+        } catch (refreshError) {
+            console.error('Failed to refresh cart after mutation error', refreshError);
+            setCartItems(previousItems);
+        }
+        toast.error(getErrorMessage(err, fallbackMessage));
+    };
+
+    const addToCart = async (product: CartProduct, quantity: number, options?: { size?: string; grind?: string }): Promise<boolean> => {
+        const existingItem = cartItems.find(item =>
+            item.productId === product.id &&
+            (isAuthenticated || item.id === `${product.id}-${options?.size || 'default'}-${options?.grind || 'default'}`)
+        );
+        if (quantity < 1 || quantity > MAX_QUANTITY_PER_PRODUCT ||
+            (existingItem?.quantity ?? 0) + quantity > MAX_QUANTITY_PER_PRODUCT) {
+            toast.error(`You can add up to ${MAX_QUANTITY_PER_PRODUCT} of each product.`);
+            return false;
+        }
+
+        if (isAuthenticated && !beginServerMutation()) return false;
         const previousItems = [...cartItems];
         const optimisticItem = createLocalCartItem(product, quantity, options);
 
@@ -195,13 +254,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
             return true;
-        } catch (err: any) {
-            rollbackCart(previousItems, err, 'Failed to save item. Your cart has been restored.');
+        } catch (err: unknown) {
+            await recoverServerCart(previousItems, err, 'Failed to save item. Your cart has been restored.');
             return false;
+        } finally {
+            endServerMutation();
         }
     };
 
     const removeFromCart = async (itemId: string): Promise<boolean> => {
+        if (isAuthenticated && !beginServerMutation()) return false;
         const previousItems = [...cartItems];
         const itemToRemove = cartItems.find(i => i.id === itemId);
 
@@ -217,9 +279,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             await cartService.removeFromCart(Number(itemId));
             return true;
-        } catch (err: any) {
-            rollbackCart(previousItems, err, 'Failed to remove item. Your cart has been restored.');
+        } catch (err: unknown) {
+            await recoverServerCart(previousItems, err, 'Failed to remove item. Your cart has been restored.');
             return false;
+        } finally {
+            endServerMutation();
         }
     };
 
@@ -227,6 +291,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (newQuantity < 1) {
             return removeFromCart(itemId);
         }
+
+        if (newQuantity > MAX_QUANTITY_PER_PRODUCT) {
+            toast.error(`You can add up to ${MAX_QUANTITY_PER_PRODUCT} of each product.`);
+            return false;
+        }
+
+        if (isAuthenticated && !beginServerMutation()) return false;
 
         const previousItems = [...cartItems];
 
@@ -251,13 +322,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             );
 
             return true;
-        } catch (err: any) {
-            rollbackCart(previousItems, err, 'Failed to update cart. Your cart has been restored.');
+        } catch (err: unknown) {
+            await recoverServerCart(previousItems, err, 'Failed to update cart. Your cart has been restored.');
             return false;
+        } finally {
+            endServerMutation();
         }
     };
 
     const clearCart = async (): Promise<boolean> => {
+        if (isAuthenticated && !beginServerMutation()) return false;
         const previousItems = [...cartItems];
         setCartItems([]);
 
@@ -266,18 +340,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             await cartService.clearCart();
             return true;
-        } catch (err: any) {
-            rollbackCart(previousItems, err, 'Failed to clear cart. Your cart has been restored.');
+        } catch (err: unknown) {
+            await recoverServerCart(previousItems, err, 'Failed to clear cart. Your cart has been restored.');
             return false;
+        } finally {
+            endServerMutation();
         }
     };
 
     // Derived state
     const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
     const cartTotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const hasUnavailableItems = cartItems.some(item => item.isAvailable === false);
 
     return (
-        <CartContext.Provider value={{ cartItems, cartCount, cartTotal, addToCart, removeFromCart, updateQuantity, clearCart, isCartOpen, setIsCartOpen }}>
+        <CartContext.Provider value={{ cartItems, cartCount, cartTotal, addToCart, removeFromCart, updateQuantity, clearCart, isCartOpen, setIsCartOpen, isMutating, hasUnavailableItems }}>
             {children}
         </CartContext.Provider>
     );

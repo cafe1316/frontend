@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 
 // 首页组件
 const HomePage = () => {
-  const { addToCart } = useCart();
+  const { addToCart, isMutating } = useCart();
   const [featuredProducts, setFeaturedProducts] = useState<ProductListDto[]>([]);
   const [categories, setCategories] = useState<CategoryWithSubsDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,10 +40,11 @@ const HomePage = () => {
         ]);
         setFeaturedProducts(products);
         setCategories(cats.slice(0, 3)); // Display top 3 categories
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const apiError = error as { userMessage?: string };
         console.error("Failed to fetch homepage data", error);
-        toast.error(error.userMessage ?? 'Failed to load homepage content. Please refresh.', {
-          id: error.userMessage ?? 'homepage_error'
+        toast.error(apiError.userMessage ?? 'Failed to load homepage content. Please refresh.', {
+          id: apiError.userMessage ?? 'homepage_error'
         });
       } finally {
         setLoading(false);
@@ -54,6 +55,7 @@ const HomePage = () => {
 
   const handleAddToCart = async (e: React.MouseEvent, product: ProductListDto) => {
     e.preventDefault(); // Prevent navigation
+    if (product.stockStatus === 'OutOfStock') return;
     const success = await addToCart(product, 1);
     if (success) toast.success(`Added ${product.name} to cart!`);
   };
@@ -125,7 +127,7 @@ const HomePage = () => {
       {/*<!-- popular product -->*/}
       <section className="py-12 px-8 md:px-16 bg-gray-50">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold">Best Sellers</h2>
+          <h2 className="text-2xl font-bold">Featured Products</h2>
           <Link to="/products" className="text-red-500 flex items-center hover:text-red-600">
             View All <i className="fas fa-arrow-right ml-2"></i>
           </Link>
@@ -152,12 +154,14 @@ const HomePage = () => {
                     {product.roastLevel || "Coffee"}
                   </p>
                   <div className="flex justify-between items-center mt-auto">
-                    <span className="font-bold">¥{product.price.toFixed(2)}</span>
+                    <span className="font-bold">{product.currency === 'AUD' ? '$' : '¥'}{product.price.toFixed(2)}</span>
                     <button
                       onClick={(e) => handleAddToCart(e, product)}
-                      className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition shadow-sm hover:shadow active:scale-95"
+                      disabled={product.stockStatus === 'OutOfStock' || isMutating}
+                      aria-label={product.stockStatus === 'OutOfStock' ? `${product.name} is out of stock` : `Add ${product.name} to cart`}
+                      className={`text-white p-2 rounded-full transition shadow-sm ${(product.stockStatus === 'OutOfStock' || isMutating) ? 'bg-gray-300 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 hover:shadow active:scale-95'}`}
                     >
-                      <i className="fas fa-plus"></i>
+                      <i className={product.stockStatus === 'OutOfStock' ? 'fas fa-ban' : 'fas fa-plus'}></i>
                     </button>
                   </div>
                 </div>

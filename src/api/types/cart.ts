@@ -25,6 +25,8 @@ export interface CartItemDto {
     // 数量和库存
     quantity: number;
     stockStatus: string;  // "InStock" | "LowStock" | "OutOfStock"
+    isAvailable: boolean;
+    availabilityMessage?: string | null;
 
     // 小计（后端计算好的）
     subtotal: number;
@@ -44,6 +46,7 @@ export interface CartDto {
     totalItems: number;
     totalAmount: number;
     currency: string;
+    hasUnavailableItems: boolean;
 }
 
 /**

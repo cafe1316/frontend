@@ -4,7 +4,7 @@ import { useAuth } from '../components/AuthContext';
 import toast from 'react-hot-toast';
 
 const MyShoppingCart = () => {
-    const { cartItems, updateQuantity, removeFromCart, cartTotal } = useCart();
+    const { cartItems, updateQuantity, removeFromCart, cartTotal, isMutating, hasUnavailableItems } = useCart();
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
 
@@ -77,7 +77,7 @@ const MyShoppingCart = () => {
                                                         <button
                                                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
                                                             className="px-2 py-1 text-gray-500 hover:text-red-500 disabled:opacity-50"
-                                                            disabled={item.quantity <= 1}
+                                                            disabled={item.quantity <= 1 || isMutating}
                                                         >
                                                             <i className="fas fa-minus"></i>
                                                         </button>
@@ -89,7 +89,8 @@ const MyShoppingCart = () => {
                                                         />
                                                         <button
                                                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                            className="px-2 py-1 text-gray-500 hover:text-red-500"
+                                                            disabled={isMutating || item.isAvailable === false || item.quantity >= 99}
+                                                            className="px-2 py-1 text-gray-500 hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                                         >
                                                             <i className="fas fa-plus"></i>
                                                         </button>
@@ -99,9 +100,15 @@ const MyShoppingCart = () => {
 
                                             {/* Actions */}
                                             <div className="flex justify-end mt-2">
+                                                {item.isAvailable === false && (
+                                                    <p className="mr-auto text-sm text-red-600">
+                                                        {item.availabilityMessage || 'This item must be updated before checkout.'}
+                                                    </p>
+                                                )}
                                                 <button
                                                     onClick={() => removeFromCart(item.id)}
-                                                    className="text-gray-500 hover:text-red-500 text-sm flex items-center transition"
+                                                    disabled={isMutating}
+                                                    className="text-gray-500 hover:text-red-500 text-sm flex items-center transition disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     <i className="fas fa-trash-alt mr-1"></i>
                                                     Remove
@@ -139,7 +146,11 @@ const MyShoppingCart = () => {
                                 </div>
 
                                 <div className="space-y-3">
-                                    {isAuthenticated ? (
+                                    {hasUnavailableItems ? (
+                                        <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700 text-center">
+                                            Please remove or adjust unavailable items before checkout.
+                                        </div>
+                                    ) : isAuthenticated ? (
                                         <Link to="/checkout" className="block w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition font-medium text-center">
                                             Proceed to Checkout
                                         </Link>
