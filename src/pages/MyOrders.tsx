@@ -4,6 +4,7 @@ import { orderService } from "../api/services/orderService";
 import { OrderDto } from "../api/types/index";
 import { Link } from "react-router-dom";
 import toast from 'react-hot-toast';
+import { getUserMessage } from '../utils/errors';
 
 const MyOrders = () => {
     const [orders, setOrders] = useState<OrderDto[]>([]);
@@ -19,9 +20,9 @@ const MyOrders = () => {
             setOrders(result.items);
             setTotalPages(result.totalPages);
             setCurrentPage(result.page);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Failed to fetch orders", error);
-            toast.error(error.userMessage ?? 'Failed to load orders. Please refresh.');
+            toast.error(getUserMessage(error, 'Failed to load orders. Please refresh.'));
         } finally {
             setLoading(false);
         }
