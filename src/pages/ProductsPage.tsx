@@ -9,6 +9,7 @@ import ProductFilters from '../components/products/ProductFilters';
 import ProductGrid from '../components/products/ProductGrid';
 import Pagination from '../components/products/Pagination';
 import toast from 'react-hot-toast';
+import { getUserMessage } from '../utils/errors';
 
 export default function ProductsPage() {
   const [searchParams] = useSearchParams();
@@ -51,9 +52,9 @@ export default function ProductsPage() {
       try {
         const cats = await categoryService.getAllCategories();
         setCategories(cats);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to fetch categories", err);
-        toast.error(err.userMessage ?? 'Failed to load categories.');
+        toast.error(getUserMessage(err, 'Failed to load categories.'));
       }
     };
     fetchInitialData();
@@ -101,9 +102,9 @@ export default function ProductsPage() {
       setProducts(result.items);
       setTotalCount(result.totalCount);
       setTotalPages(result.totalPages);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to fetch products", error);
-      toast.error(error.userMessage ?? 'Failed to load products. Please try again.');
+      toast.error(getUserMessage(error, 'Failed to load products. Please try again.'));
     } finally {
       setLoading(false);
     }

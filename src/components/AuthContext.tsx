@@ -7,6 +7,7 @@ import {
 } from "react";
 import { UserDto } from "../api/types/index";
 import { authService } from "../api/services/authService";
+import { getHttpStatus } from "../utils/errors";
 
 // --- 第一站：定義數據結構 ---
 // AuthState 是整門店的「登錄狀態記錄本」
@@ -96,10 +97,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (token && !state.isAuthenticated) {
         dispatch({ type: "LOGIN", payload: { token, user } });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to fetch user profile", error);
       // 如果後端說 Token 沒用了 (404/401)，自動登出
-      if (error.response?.status === 404) {
+      if (getHttpStatus(error) === 404) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         dispatch({ type: "LOGOUT" });
@@ -119,7 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           const user = JSON.parse(storedUser);
           dispatch({ type: "LOGIN", payload: { token, user } });
-        } catch (e) {
+        } catch {
           localStorage.removeItem("user");
         }
       }
@@ -136,8 +137,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // 1. Save to browser safe box
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
-    } catch (e: any) {
-      console.error("Failed to write to localStorage. This may be due to privacy settings (e.g. Safari ITP) or storage quota exceeded.", e);
+    } catch (error: unknown) {
+      console.error("Failed to write to localStorage. This may be due to privacy settings (e.g. Safari ITP) or storage quota exceeded.", error);
     }
 
     // 2. Broadcast to the whole site: We are logged in!

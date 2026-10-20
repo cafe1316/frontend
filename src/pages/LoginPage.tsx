@@ -4,11 +4,12 @@ import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth, provider } from "../lib/firebase";
 import { useAuth } from "../components/AuthContext";
 import { authService } from "../api/services/authService";
+import { getErrorCode } from "../utils/errors";
 
 const LoginPage = () => {
   // 状态管理
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<String | null>(null); // 新增错误状态
+  const [error, setError] = useState<string | null>(null); // 新增错误状态
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/";
@@ -62,19 +63,20 @@ const LoginPage = () => {
           login(backendToken, user);
           navigate(from, { replace: true });
 
-        } catch (backendError: any) {
+        } catch (backendError: unknown) {
           console.error("Backend validation failed", backendError);
           setError("We couldn't complete Google sign-in. Please try again.");
           return; // Prevent fall-through to navigate() below
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Google Login failed", err);
 
       // 处理 Google Popup 关闭的情况
-      if (err.code === 'auth/popup-closed-by-user') {
+      const errorCode = getErrorCode(err);
+      if (errorCode === 'auth/popup-closed-by-user') {
         setError("Login cancelled");
-      } else if (err.code === 'auth/invalid-credential') {
+      } else if (errorCode === 'auth/invalid-credential') {
         setError("Google sign-in is temporarily unavailable. Please try again later.");
       } else {
         setError("Google Login failed. Please try again.");
